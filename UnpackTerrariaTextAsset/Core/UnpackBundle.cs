@@ -432,20 +432,21 @@ public class UnpackBundle
         
         var languageNames = new Dictionary<string, string>
         {
-            ["English"] = "简体中文",
-            ["Spanish"] = "Español",
-            ["French"] = "English",
-            ["Italian"] = "Italiano",
-            ["Russian"] = "Русский",
-            ["Chinese"] = "简体中文",
+            ["English"] = "悠然汉化修正V8.2.0.1",
+            ["Spanish"] = "在此特别感谢:二柱子,lzup的技术指导!!",
+            ["French"] = "本汉化修正版本完全免费！禁止商业用途！抵制倒卖！",
+            ["Italian"] = "汉化版本仅提供内部玩家游玩!",
+            ["Russian"] = "在此特别感谢皮皮蛙大佬，汉化界的里程碑",
+            ["Chinese"] = "爱来自中文",
             ["ChineseTraditional"] = "繁體中文",
-            ["ChineseSimplified"] = "简体中文",
-            ["Japanese"] = "日本語",
-            ["Portuguese"] = "Português brasileiro",
-            ["German"] = "Deutsch",
-            ["Polish"] = "Polski",
-            ["Korean"] = "한국어"
+            ["ChineseSimplified"] = "皮皮蛙大佬我一生追随目标!!!!!!",
+            ["Japanese"] = "参考了皮皮蛙大佬汉化!",
+            ["Portuguese"] = "感谢P汉!参考了P汉!",
+            ["German"] = "汉化成员:B站(悠然_ing),(Dr.克伦威尔)",
+            ["Polish"] = "本汉化基于皮皮蛙大佬汉化进行145修正",
+            ["Korean"] = "玩的开心!"
         };
+        
         
         var langCodes = new[] { "en-US", "fr-FR", "es-ES", "de-DE", "it-IT", "ja-JP", "ko-KR", "pl-PL", "pt-BR", "ru-RU", "zh-Hans", "zh-Hant" };
 
