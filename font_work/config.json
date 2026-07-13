@@ -2,7 +2,7 @@
   "global": {
     "bmfontExe": "./bmfont64.com",
     "xnaFontRebuilder": "./XnaFontRebuilder/bin/Release/net8.0/XnaFontRebuilder.dll",
-    "sourceFont": "./NotoSerifCJKsc-Medium.otf",
+    "sourceFont": "./ChangBanDianSong-16-SC.ttf",
     "fontInfoDir": "./FontInfo"
   },
   "fonts": {
