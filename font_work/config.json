@@ -2,7 +2,7 @@
   "global": {
     "bmfontExe": "./bmfont64.com",
     "xnaFontRebuilder": "./XnaFontRebuilder/bin/Release/net8.0/XnaFontRebuilder.dll",
-    "sourceFont": "./font.otf",
+    "sourceFont": "./南西油墨宋.ttf",
     "fontInfoDir": "./FontInfo"
   },
   "fonts": {
