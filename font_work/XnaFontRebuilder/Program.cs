@@ -348,8 +348,8 @@ class Program
         writer.WriteLine("widthPaddingFactor=0.00");
         writer.WriteLine();
         writer.WriteLine("# output file");
-        writer.WriteLine("outWidth=1024");
-        writer.WriteLine("outHeight=1024");
+        writer.WriteLine("outWidth=4096");
+        writer.WriteLine("outHeight=4096");
         writer.WriteLine("outBitDepth=32");
         writer.WriteLine("fontDescFormat=1");
         writer.WriteLine("fourChnlPacked=0");
