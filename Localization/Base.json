@@ -388,7 +388,7 @@
         "ControllerGlyphPlayStation": "PlayStation",
         "ControllerGlyphSwitch": "Nintendo",
         "PlayerCreateDiscardWarningWithName": "丢弃{0}？",
-        "PlayerCreateDiscardWarningNoName": "丢弃你的新玩家？",
+        "PlayerCreateDiscardWarningNoName": "放弃编辑新玩家？",
         "PlayerCreateDiscardWarningYes": "是，放弃更改！",
         "PlayerCreateDiscardWarningNo": "不，继续编辑……",
         "ActionOpen": "开放",
