@@ -2,7 +2,7 @@
   "global": {
     "bmfontExe": "./bmfont64.com",
     "xnaFontRebuilder": "./XnaFontRebuilder/bin/Release/net8.0/XnaFontRebuilder.dll",
-    "sourceFont": "./WenYuanRoundedSC-Bold.ttf",
+    "sourceFont": "./BlackSugarPlumCandy-Bold.ttf",
     "fontInfoDir": "./FontInfo"
   },
   "conversion": {
@@ -11,7 +11,7 @@
   },
   "fonts": {
     "Item_Stack": {
-      "sourceFont": "./WenYuanRoundedSC-Bold.ttf",
+      "sourceFont": "./ChillRoundGothic_Normal.ttf",
       "configFile": "./Item_Stack.bmfc",
       "outputDir": "./Item_Stack",
       "fontFile": "Item_Stack.fnt",
@@ -20,7 +20,7 @@
       "charInfoFile": "./FontInfo/Item_Stack.txt"
     },
     "Combat_Crit": {
-      "sourceFont": "./ShangguRound-Bold.ttf",
+      "sourceFont": "./KumarOne-Regular.otf",
       "configFile": "./Combat_Crit.bmfc",
       "outputDir": "./Combat_Crit",
       "fontFile": "Combat_Crit.fnt",
@@ -29,7 +29,7 @@
       "charInfoFile": "./FontInfo/Combat_Crit.txt"
     },
     "Combat_Text": {
-      "sourceFont": "./ChillRoundGothic_Normal.ttf",
+      "sourceFont": "./ShangguRound-Bold.ttf",
       "configFile": "./Combat_Text.bmfc",
       "outputDir": "./Combat_Text",
       "fontFile": "Combat_Text.fnt",
@@ -38,7 +38,7 @@
       "charInfoFile": "./FontInfo/Combat_Text.txt"
     },
     "Death_Text": {
-      "sourceFont": "./BlackSugarPlumCandy-Bold.ttf",
+      "sourceFont": "./AlimamaDongFangDaKai-Regular.otf",
       "configFile": "./Death_Text.bmfc",
       "outputDir": "./Death_Text",
       "fontFile": "Death_Text.fnt",
@@ -47,7 +47,7 @@
       "charInfoFile": "./FontInfo/Death_Text.txt"
     },
     "Mouse_Text": {
-      "sourceFont": "./NotoSerifCJKsc-Medium.otf",
+      "sourceFont": "./BlackSugarPlumCandy-Bold.ttf",
       "configFile": "./Mouse_Text.bmfc",
       "outputDir": "./Mouse_Text",
       "fontFile": "Mouse_Text.fnt",
