@@ -65,15 +65,14 @@ jobs:
               continue
             }
 
-            # 获取配置项（如果 config.json 里字段名有差异，这里需要调整）
+            # 获取配置项
             $sourceFont = $fontCfg.sourceFont
             $cfgFile = $fontCfg.configFile
             $outputDir = $fontCfg.outputDir
-            $fontFile = $fontCfg.fontFile
             $txtFile = $fontCfg.txtFile
             $charInfo = $fontCfg.charInfoFile
 
-            # 如果 $sourceFont 是相对路径，确保它存在
+            # 如果源字体不存在，尝试使用全局字体
             if (-not (Test-Path $sourceFont)) {
               Write-Host "  警告: 源字体不存在 $sourceFont，尝试使用全局 sourceFont" -ForegroundColor Yellow
               $sourceFont = $config.global.sourceFont
@@ -102,19 +101,25 @@ jobs:
               continue
             }
 
-            # 步骤2: 运行 BMFont
-            $outputBase = Join-Path $outputDir $fontFile
+            # 步骤2: 运行 BMFont - 强制使用 .fnt 扩展名
+            $fntFile = "$fontName.fnt"
+            $outputBase = Join-Path $outputDir $fntFile
             Write-Host "  [2/3] 运行 BMFont: $bmfont -c $cfgFile -o $outputBase"
             & $bmfont -c $cfgFile -o $outputBase
             if ($LASTEXITCODE -ne 0) {
               Write-Host "  错误: BMFont 生成失败" -ForegroundColor Red
               continue
             }
+            # 检查文件是否生成
+            if (-not (Test-Path $outputBase)) {
+              Write-Host "  错误: BMFont 未生成 $outputBase" -ForegroundColor Red
+              continue
+            }
 
             # 步骤3: 转换为 TXT
             $txtOutput = Join-Path $outputDir $txtFile
             Write-Host "  [3/3] 转换为 TXT: $txtOutput"
-            dotnet $xnaDll --convert $outputBase $txtOutput --latin-compensation $config.conversion.latinCompensation --char-spacing $config.conversion.charSpacing
+            dotnet $xnaDll --convert $outputBase $txtOutput --latin-compensation 0 --char-spacing 0
             if ($LASTEXITCODE -ne 0) {
               Write-Host "  错误: TXT 转换失败" -ForegroundColor Red
               continue
