@@ -85,7 +85,7 @@ jobs:
             Write-Host "Running FontBuilder.ps1 with args: $args"
 
             # Prefer repository bmfont binary
-            if (Test-Path .\bmfont64.exe -or Test-Path .\bmfont64.com) {
+            if ((Test-Path .\bmfont64.exe) -or (Test-Path .\bmfont64.com)) {
                 Write-Host "Using repository bmfont binary"
             } elseif ($env:BMFONT_PATH) {
                 Write-Host "Copying BMFont from $env:BMFONT_PATH into repo"
