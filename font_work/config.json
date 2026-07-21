@@ -2,7 +2,7 @@
   "global": {
     "bmfontExe": "./bmfont64.com",
     "xnaFontRebuilder": "./XnaFontRebuilder/bin/Release/net8.0/XnaFontRebuilder.dll",
-    "sourceFont": "./ShangguRound-Bold.ttf",
+    "sourceFont": "./WenYuanRoundedSC-Bold.ttf",
     "fontInfoDir": "./FontInfo"
   },
   "conversion": {
@@ -29,7 +29,7 @@
       "charInfoFile": "./FontInfo/Combat_Crit.txt"
     },
     "Combat_Text": {
-      "sourceFont": "./ShangguRound-Bold.ttf",
+      "sourceFont": "./BlackSugarPlumCandy-Bold.ttf",
       "configFile": "./Combat_Text.bmfc",
       "outputDir": "./Combat_Text",
       "fontFile": "Combat_Text.fnt",
@@ -47,7 +47,7 @@
       "charInfoFile": "./FontInfo/Death_Text.txt"
     },
     "Mouse_Text": {
-      "sourceFont": "./ShangguRound-Bold.ttf",
+      "sourceFont": "./BlackSugarPlumCandy-Bold.ttf",
       "configFile": "./Mouse_Text.bmfc",
       "outputDir": "./Mouse_Text",
       "fontFile": "Mouse_Text.fnt",
