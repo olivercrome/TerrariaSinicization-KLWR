@@ -38,7 +38,7 @@
       "charInfoFile": "./FontInfo/Combat_Text.txt"
     },
     "Death_Text": {
-      "sourceFont": "./浪课江湖联盟简体.ttf",
+      "sourceFont": "./langkejianghulianmeng.ttf",
       "configFile": "./Death_Text.bmfc",
       "outputDir": "./Death_Text",
       "fontFile": "Death_Text.fnt",
