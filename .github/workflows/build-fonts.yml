@@ -1,0 +1,135 @@
+name: Build Fonts (字体转字库)
+
+on:
+  workflow_dispatch:
+    inputs:
+      font:
+        description: 'Single font name to build (optional, e.g. Item_Stack)'
+        required: false
+        default: ''
+      rebuild:
+        description: 'Force rebuild XnaFontRebuilder (true/false)'
+        required: false
+        default: 'false'
+  push:
+    paths:
+      - 'font_work/**'
+
+jobs:
+  build-fonts:
+    name: Build fonts (BMFont -> .fnt/.png -> XnaFontRebuilder -> .txt)
+    runs-on: windows-latest
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v6
+
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v5
+      with:
+        dotnet-version: '8.0.x'
+
+    - name: Ensure BMFont available (prefer repo)
+      id: ensure_bmfont
+      shell: pwsh
+      run: |
+        $repoBm1 = Join-Path $env:GITHUB_WORKSPACE 'font_work\bmfont64.exe'
+        $repoBm2 = Join-Path $env:GITHUB_WORKSPACE 'font_work\bmfont64.com'
+        if (Test-Path $repoBm1) {
+          Write-Host "Found bmfont in repo: $repoBm1"
+          Write-Output "BMFONT_PATH=$repoBm1" | Out-File -FilePath $env:GITHUB_OUTPUT -Encoding utf8 -Append
+        } elseif (Test-Path $repoBm2) {
+          Write-Host "Found bmfont in repo: $repoBm2"
+          Write-Output "BMFONT_PATH=$repoBm2" | Out-File -FilePath $env:GITHUB_OUTPUT -Encoding utf8 -Append
+        } else {
+          Write-Host "BMFont not found in repo, attempting to install via Chocolatey..."
+          $installed = $false
+          if (Get-Command choco -ErrorAction SilentlyContinue) {
+            choco install bmfont -y
+            $possible = @("C:\ProgramData\chocolatey\bin\bmfont.exe","C:\ProgramData\chocolatey\bin\bmfont64.exe")
+            foreach ($p in $possible) { if (Test-Path $p) { Write-Host "BMFont installed: $p"; Write-Output "BMFONT_PATH=$p" | Out-File -FilePath $env:GITHUB_OUTPUT -Encoding utf8 -Append; $installed = $true; break } }
+            if (-not $installed) { Write-Host "Chocolatey installed but binary not found." }
+          } else {
+            Write-Host "Chocolatey not available on runner; BMFont must be present in repo." 
+          }
+          if (-not $installed) {
+            # leave BMFONT_PATH empty; FontBuilder will error if not present
+            exit 0
+          }
+        }
+
+    - name: Build XnaFontRebuilder
+      id: build_rebuilder
+      run: |
+        cd font_work\XnaFontRebuilder
+        dotnet build -c Release
+
+    - name: Run FontBuilder.ps1
+      id: run_builder
+      shell: pwsh
+      env:
+        BMFONT_PATH: ${{ steps.ensure_bmfont.outputs.BMFONT_PATH }}
+      run: |
+        Set-StrictMode -Version Latest
+        $ScriptDir = Join-Path $env:GITHUB_WORKSPACE 'font_work'
+        Push-Location $ScriptDir
+        $copiedBm = $false
+        try {
+            $font = '${{ github.event.inputs.font }}'
+            $rebuild = '${{ github.event.inputs.rebuild }}'
+
+            $args = @()
+            if ($font -ne '') { $args += "-Font `"$font`"" }
+            if ($rebuild -eq 'true') { $args += '-Rebuild' }
+
+            Write-Host "Running FontBuilder.ps1 with args: $args"
+
+            # Prefer repository bmfont binary
+            if (Test-Path .\bmfont64.exe -or Test-Path .\bmfont64.com) {
+                Write-Host "Using repository bmfont binary"
+            } elseif ($env:BMFONT_PATH) {
+                Write-Host "Copying BMFont from $env:BMFONT_PATH into repo"
+                Copy-Item $env:BMFONT_PATH -Destination . -Force
+                $copiedBm = $true
+            } else {
+                Write-Host "No BMFont available (neither in repo nor installed). FontBuilder.ps1 will likely fail."
+            }
+
+            # Run builder
+            .\FontBuilder.ps1 @args
+        } finally {
+            # expose whether we copied bmfont so cleanup step can remove it
+            if ($copiedBm) { Write-Output "COPIED_BMFONT=1" | Out-File -FilePath $env:GITHUB_OUTPUT -Encoding utf8 -Append }
+            Pop-Location
+        }
+
+    - name: Show generated font files (debug)
+      shell: pwsh
+      run: |
+        Write-Host "Listing font_work output files:"
+        Get-ChildItem -Path font_work -Include *.txt,*.png,*.fnt -Recurse -ErrorAction SilentlyContinue | Select-Object FullName, Length | ForEach-Object { Write-Host $_.FullName }
+
+    - name: Upload built fonts (字体转字库)
+      uses: actions/upload-artifact@v7
+      with:
+        name: 字体转字库
+        path: |
+          font_work/**/*.txt
+          font_work/**/*.png
+          font_work/**/*.fnt
+        if-no-files-found: error
+
+    - name: Cleanup copied BMFont (if any)
+      if: always()
+      shell: pwsh
+      run: |
+        # Only remove bmfont copied into repo (do not try to uninstall system packages)
+        if ('${{ steps.run_builder.outputs.COPIED_BMFONT }}' -eq '1') {
+          $copied = Join-Path $env:GITHUB_WORKSPACE 'font_work\bmfont64.exe'
+          if (Test-Path $copied) {
+            Write-Host "Removing copied BMFont: $copied"
+            Remove-Item $copied -Force -ErrorAction SilentlyContinue
+          }
+        } else {
+          Write-Host "No BMFont was copied into repo; nothing to clean here."
+        }
