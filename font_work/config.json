@@ -2,7 +2,7 @@
   "global": {
     "bmfontExe": "./bmfont64.com",
     "xnaFontRebuilder": "./XnaFontRebuilder/bin/Release/net8.0/XnaFontRebuilder.dll",
-    "sourceFont": "./MonuYueDong-Bd1.5.ttf",
+    "sourceFont": "./WenYuanRoundedSC-Bold.ttf",
     "fontInfoDir": "./FontInfo"
   },
   "fonts": {
