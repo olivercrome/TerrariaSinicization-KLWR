@@ -432,7 +432,7 @@ public class UnpackBundle
         
         var languageNames = new Dictionary<string, string>
         {
-            ["English"] = "悠然汉化修正V8.2.0.1",
+            ["English"] = "悠然汉化修正V8.2.0",
             ["Spanish"] = "在此特别感谢:二柱子,lzup的技术指导!!",
             ["French"] = "本汉化修正版本完全免费！禁止商业用途！抵制倒卖！",
             ["Italian"] = "汉化版本仅提供内部玩家游玩!",
