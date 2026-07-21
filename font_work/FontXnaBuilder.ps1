@@ -306,6 +306,8 @@ function Main {
         [switch]$Rebuild
     )
     
+    $fontsToGenerate = @{}   # <--- 添加这一行
+    
     # 显示帮助
     if ($Help) {
         Show-Help
