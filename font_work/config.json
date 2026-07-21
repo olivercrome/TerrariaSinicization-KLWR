@@ -2,7 +2,7 @@
   "global": {
     "bmfontExe": "./bmfont64.com",
     "xnaFontRebuilder": "./XnaFontRebuilder/bin/Release/net8.0/XnaFontRebuilder.dll",
-    "sourceFont": "./MonuYueDong-Bd1.5.ttf",
+    "sourceFont": "./NotoSerifCJKsc-Medium.otf",
     "fontInfoDir": "./FontInfo"
   },
   "conversion": {
@@ -47,7 +47,7 @@
       "charInfoFile": "./FontInfo/Death_Text.txt"
     },
     "Mouse_Text": {
-      "sourceFont": "./ShangguRound-Bold.ttf",
+      "sourceFont": "./MonuYueDong-Bd1.5.ttf",
       "configFile": "./Mouse_Text.bmfc",
       "outputDir": "./Mouse_Text",
       "fontFile": "Mouse_Text.fnt",
