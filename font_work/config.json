@@ -2,7 +2,7 @@
   "global": {
     "bmfontExe": "./bmfont64.com",
     "xnaFontRebuilder": "./XnaFontRebuilder/bin/Release/net8.0/XnaFontRebuilder.dll",
-    "sourceFont": "./ShangguRound-Bold.ttf",
+    "sourceFont": "./WenYuanRoundedSC-Bold.ttf",
     "fontInfoDir": "./FontInfo"
   },
   "fonts": {
@@ -12,7 +12,8 @@
       "fontFile": "Item_Stack.fnt",
       "txtFile": "Item_Stack.txt",
       "description": "物品堆叠数字字体",
-      "charInfoFile": "./FontInfo/Item_Stack.txt"
+      "charInfoFile": "./FontInfo/Item_Stack.txt",
+      "sourceFont": "./vivoSans-Regular.ttf"
     },
     "Combat_Crit": {
       "configFile": "./Combat_Crit.bmfc",

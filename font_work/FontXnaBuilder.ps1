@@ -125,14 +125,21 @@ function Generate-ConfigFile {
     }
     
     try {
+        # 确定使用哪个字体文件
+        $fontSource = if ($FontConfig.SourceFont) {
+            $FontConfig.SourceFont
+        } else {
+            $SourceFont   # 全局字体
+        }
+        Write-Host "    使用字体: $fontSource" -ForegroundColor Gray
+
         # 使用 --build-cfg-auto 命令生成配置文件
-        # 从 XNA 二进制字体文件提取字符信息并生成 BMFont 配置
         $cmdArgs = @(
             "`"$XnaFontRebuilder`""
             "--build-cfg-auto"
             "`"$($FontConfig.CharInfoFile)`""
             "`"$($FontConfig.ConfigFile)`""
-            "`"$SourceFont`""
+            "`"$fontSource`""
         )
 
         $cmd = "dotnet " + ($cmdArgs -join " ")
