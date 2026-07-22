@@ -42,17 +42,14 @@ foreach ($fontName in $Config.fonts.PSObject.Properties.Name) {
 
 # ---- 函数：从字符集文件中提取所有唯一字符 ----
 function Get-AllCharacters {
-    # 读取文件内容（UTF-8 无 BOM）
     $content = Get-Content -Path $CharsetFile -Raw -Encoding UTF8
     $allChars = [System.Collections.Generic.HashSet[char]]::new()
 
     foreach ($c in $content.ToCharArray()) {
-        # 跳过控制字符（保留空格和换行符？实际上文件中可能有换行，但为了字符集，我们保留所有可见字符）
         if ([char]::IsControl($c) -and $c -notin "`t", "`n", "`r") { continue }
         $null = $allChars.Add($c)
     }
 
-    # 强制添加 ASCII 可见字符（以防文件中遗漏）
     for ($i = 32; $i -le 126; $i++) {
         $null = $allChars.Add([char]$i)
     }
@@ -62,12 +59,12 @@ function Get-AllCharacters {
     return $charList
 }
 
-# ---- 调用 BMFont 命令行（修正版，只执行一次并捕获输出） ----
+# ---- 调用 BMFont 命令行（修正输出路径） ----
 function Invoke-BMFontDirect {
     param(
         [string]$SourceFontPath,
         [string]$CharsFile,
-        [string]$OutputPrefix,
+        [string]$OutputPrefix,      # 相对路径，如 "Combat_Crit\Combat_Crit"
         [int]$FontSize,
         [int]$LineHeight,
         [int]$TextureWidth,
@@ -89,7 +86,6 @@ function Invoke-BMFontDirect {
     $cmd = "$BMFontExe " + ($argList -join " ")
     Write-Host "  执行: $cmd" -ForegroundColor Gray
     
-    # 执行命令，捕获所有输出（含错误流）
     $output = Invoke-Expression $cmd 2>&1
     $exitCode = $LASTEXITCODE
     
@@ -99,7 +95,6 @@ function Invoke-BMFontDirect {
         $output | ForEach-Object { Write-Host "    $_" -ForegroundColor Red }
         throw "BMFont 生成失败，退出代码: $exitCode"
     } else {
-        # 如果有标准输出，可以打印（用于调试）
         if ($output) {
             Write-Host "  输出信息:" -ForegroundColor Gray
             $output | ForEach-Object { Write-Host "    $_" -ForegroundColor Gray }
@@ -111,7 +106,7 @@ function Invoke-BMFontDirect {
 # 1. 提取字符集
 $chars = Get-AllCharacters
 
-# 生成字符码点文件（每行一个十六进制码点）
+# 生成字符码点文件
 $charsFilePath = Join-Path $ScriptDir "charlist.txt"
 $chars | ForEach-Object { ([int]$_).ToString("X4") } | Out-File -FilePath $charsFilePath -Encoding ASCII
 Write-Host "✓ 字符码点列表已保存到: $charsFilePath" -ForegroundColor Green
@@ -135,21 +130,25 @@ if (-not (Test-Path $sourceFontPath)) {
 # 4. 对每种字体生成
 foreach ($fontName in $fontConfigs.Keys) {
     $cfg = $fontConfigs[$fontName]
-    $outputDir = Join-Path $ScriptDir $cfg.OutputDir
+    
+    # 去掉 config 中 outputDir 的 "./" 前缀，得到干净目录名
+    $relOutputDir = $cfg.OutputDir -replace '^\./', ''
+    $outputDir = Join-Path $ScriptDir $relOutputDir
     if (-not (Test-Path $outputDir)) { New-Item -ItemType Directory -Force -Path $outputDir | Out-Null }
 
-    $prefix = Join-Path $outputDir $fontName   # 输出前缀
+    # 输出前缀使用相对路径（相对于 font_work 目录），不含 ".\"
+    $prefix = "$relOutputDir\$fontName"
 
     Write-Host "`n生成字体: $fontName" -ForegroundColor Cyan
     Write-Host "  输出前缀: $prefix" -ForegroundColor Gray
 
     try {
-        # 调用 BMFont 直接生成
+        # 调用 BMFont 生成
         Invoke-BMFontDirect -SourceFontPath $sourceFontPath -CharsFile $charsFilePath -OutputPrefix $prefix -FontSize 36 -LineHeight 44 -TextureWidth 4096 -TextureHeight 4096 -Padding 2 -Spacing 1
         
-        # 检查生成的文件
-        $fntFile = "$prefix.fnt"
-        $pngFile = "$prefix`_0.png"
+        # 检查生成的文件（绝对路径）
+        $fntFile = Join-Path $ScriptDir "$prefix.fnt"
+        $pngFile = Join-Path $ScriptDir "$prefix`_0.png"
         if (-not (Test-Path $fntFile)) { throw "未生成 .fnt 文件" }
         if (-not (Test-Path $pngFile)) { throw "未生成 .png 文件" }
 
