@@ -21,7 +21,7 @@
       "fontFile": "Combat_Crit.fnt",
       "txtFile": "Combat_Crit.txt",
       "description": "战斗暴击数字字体",
-      "charInfoFile": "./FontInfo/Combat_Crit.txt"
+      "charInfoFile": "./FontInfo/Combat_Crit.txt",
       "sourceFont": "./MonuYueDong-Bd1.5.ttf"
     },
     "Combat_Text": {
@@ -30,7 +30,7 @@
       "fontFile": "Combat_Text.fnt",
       "txtFile": "Combat_Text.txt",
       "description": "战斗文字字体",
-      "charInfoFile": "./FontInfo/Combat_Text.txt"
+      "charInfoFile": "./FontInfo/Combat_Text.txt",
       "sourceFont": "./MonuYueDong-Bd1.5.ttf"
     },
     "Death_Text": {
@@ -52,7 +52,7 @@
     }
   },
   "conversion": {
-    "latinCompensation": 0.5,
-    "charSpacing": 1
+    "latinCompensation": 0.3,
+    "charSpacing": 0.5
   }
 }
