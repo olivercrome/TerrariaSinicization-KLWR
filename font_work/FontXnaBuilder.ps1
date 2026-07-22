@@ -242,11 +242,12 @@ function Generate-Font {
     Write-Host "    ✓ .txt: $([math]::Round($txtSize/1KB, 2)) KB" -ForegroundColor Green
     Write-Host "    ✓ 纹理: $pngCount 张图片" -ForegroundColor Green
     
-    # 删除临时配置文件
-    if (Test-Path $FontConfig.ConfigFile) {
-        Remove-Item $FontConfig.ConfigFile -Force
-        Write-Host "    ✓ 删除临时配置文件: $($FontConfig.ConfigFile)"  -ForegroundColor Green
-    }
+    # 删除临时配置文件（已禁用，保留中间产物）
+    # if (Test-Path $FontConfig.ConfigFile) {
+     #     Remove-Item $FontConfig.ConfigFile -Force
+     #     Write-Host "    ✓ 删除临时配置文件: $($FontConfig.ConfigFile)"  -ForegroundColor Green
+  # }
+Write-Host "    ✓ 保留临时配置文件: $($FontConfig.ConfigFile)" -ForegroundColor Yellow
     
     $endTime = Get-Date
     $duration = ($endTime - $startTime).TotalSeconds
@@ -305,8 +306,6 @@ function Main {
         [string]$Font,
         [switch]$Rebuild
     )
-    
-    $fontsToGenerate = @{}   # <--- 添加这一行
     
     # 显示帮助
     if ($Help) {

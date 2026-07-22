@@ -28,7 +28,17 @@ jobs:
       run: |
         cd font_work
         .\FontXnaBuilder.ps1
-    
+
+    # ⬇️ 新增：上传字体中间产物 ⬇️
+    - name: 📤 Upload font intermediate files (.bmfc / .fnt / .png)
+      uses: actions/upload-artifact@v7
+      with:
+        name: font-intermediate-files
+        path: |
+          font_work/*/
+        if-no-files-found: warn
+    # ⬆️ 新增结束 ⬆️
+
     - name: Build UnpackTerrariaTextAsset
       run: |
         cd UnpackTerrariaTextAsset
@@ -112,13 +122,3 @@ jobs:
         name: localized-data-unity3d
         path: ${{ steps.paths.outputs.OUTPUT_PATH }}
         if-no-files-found: error
-
-    - name: Upload font intermediates (字体中间产物)
-      uses: actions/upload-artifact@v7
-      with:
-        name: font-files
-        path: |
-          font_work/**/*.fnt
-          font_work/**/*.png
-          font_work/**/*.txt
-        if-no-files-found: warn   # 即使没找到也继续，不影响主流程

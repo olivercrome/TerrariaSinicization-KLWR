@@ -24,7 +24,6 @@ foreach ($fontName in $Config.fonts.PSObject.Properties.Name) {
         FontFile = $fontData.fontFile
         TxtFile = $fontData.txtFile
         Description = $fontData.description
-        SourceFont = if ($fontData.sourceFont) { $fontData.sourceFont } else { $Config.global.sourceFont }
     }
 }
 
@@ -57,19 +56,12 @@ function Test-Environment {
     }
     Write-Host "  ✓ bmfont64.com" -ForegroundColor Green
     
-    # 检查所有需要的源字体
-    $checkedFonts = @{}
-    foreach ($name in $FontsToCheck.Keys) {
-        $sourceFont = $FontsToCheck[$name].SourceFont
-        if (-not $checkedFonts.ContainsKey($sourceFont)) {
-            if (-not (Test-Path $sourceFont)) {
-                Write-Host "  ✗ 未找到源字体: $sourceFont" -ForegroundColor Red
-                return $false
-            }
-            Write-Host "  ✓ 源字体: $(Split-Path $sourceFont -Leaf)" -ForegroundColor Green
-            $checkedFonts[$sourceFont] = $true
-        }
+    # 检查源字体
+    if (-not (Test-Path $SourceFont)) {
+        Write-Host "  ✗ 未找到 font.otf" -ForegroundColor Red
+        return $false
     }
+    Write-Host "  ✓ font.otf" -ForegroundColor Green
     
     # 检查 XnaFontRebuilder 项目
     if (-not (Test-Path ".\XnaFontRebuilder\XnaFontRebuilder.csproj")) {
@@ -117,23 +109,12 @@ function Generate-Font {
     
     Write-Host "`n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━" -ForegroundColor Magenta
     Write-Host "  生成字体: $FontName" -ForegroundColor Cyan
-    Write-Host "  源字体: $($FontConfig.SourceFont)" -ForegroundColor Gray
+    Write-Host "  描述: $($FontConfig.Description)" -ForegroundColor Gray
     Write-Host "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━" -ForegroundColor Magenta
     
     $startTime = Get-Date
     
-    # 创建临时 .bmfc，替换字体路径
-    $tempBmfc = Join-Path $env:TEMP "$FontName`_temp.bmfc"
-    $originalBmfc = Resolve-Path $FontConfig.ConfigFile
-    $bmfcContent = Get-Content -Raw -Path $originalBmfc -Encoding UTF8
-    
-    # 替换 .bmfc 中的字体路径
-    $bmfcContent = $bmfcContent -replace 'file="[^"]*\.(ttf|otf|TTF|OTF)"', 
-        ('file="' + ($FontConfig.SourceFont -replace '\\', '/') + '"')
-    
-    Set-Content -Path $tempBmfc -Value $bmfcContent -Encoding UTF8 -NoNewline
-    
-    # 检查配置文件（改为检查临时配置）
+    # 检查配置文件
     if (-not (Test-Path $FontConfig.ConfigFile)) {
         Write-Host "  ✗ 配置文件不存在: $($FontConfig.ConfigFile)" -ForegroundColor Red
         return $false
@@ -151,15 +132,12 @@ function Generate-Font {
     # 步骤1: 生成 BMFont
     Write-Host "  [1/3] 生成 BMFont 文件..." -ForegroundColor Yellow
     try {
-        $configAbs = $tempBmfc  # 使用临时配置
+        $configAbs = Resolve-Path $FontConfig.ConfigFile
         $fontAbs = Join-Path $PWD $fontPath
         
         $process = Start-Process -FilePath $BMFontExe `
             -ArgumentList "-c `"$configAbs`" -o `"$fontAbs`"" `
             -Wait -PassThru -NoNewWindow -WorkingDirectory $ScriptDir
-        
-        # 清理临时文件
-        Remove-Item $tempBmfc -ErrorAction SilentlyContinue
         
         if ($process.ExitCode -ne 0) {
             throw "BMFont 生成失败，退出代码: $($process.ExitCode)"
@@ -288,7 +266,7 @@ function Main {
     Write-Host "开始时间: $(Get-Date -Format 'yyyy-MM-dd HH:mm:ss')" -ForegroundColor Yellow
     
     # 环境检查
-    if (-not (Test-Environment -FontsToCheck $fontsToGenerate)) {
+    if (-not (Test-Environment)) {
         Write-Host "`n❌ 环境检查失败，请解决上述问题后重试" -ForegroundColor Red
         exit 1
     }
