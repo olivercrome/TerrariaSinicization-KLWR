@@ -1,20 +1,24 @@
 # FontXnaBuilder.ps1
 # 从 FontInfo 字符信息生成字体 - 支持批量生成和单独生成
 # 支持每个字体使用独立的源字体（通过 config.json 中的 sourceFont 字段）
+# 支持通过 -ConfigFile 参数指定配置文件
+
+param(
+    [string]$ConfigFile = "config.json"
+)
 
 $ErrorActionPreference = "Stop"
 $ScriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
 Push-Location $ScriptDir
 
+# 读取配置文件
 $ConfigPath = Join-Path $ScriptDir $ConfigFile
 if (-not (Test-Path $ConfigPath)) {
     Write-Host "✗ 配置文件不存在: $ConfigPath" -ForegroundColor Red
     exit 1
 }
-$Config = Get-Content $ConfigPath | ConvertFrom-Json
 Write-Host "使用配置文件: $ConfigFile" -ForegroundColor Cyan
-
-$Config = Get-Content $ConfigFile | ConvertFrom-Json
+$Config = Get-Content $ConfigPath | ConvertFrom-Json
 
 # 字体配置列表（包含可选的 sourceFont）
 $fontConfigs = @{}
