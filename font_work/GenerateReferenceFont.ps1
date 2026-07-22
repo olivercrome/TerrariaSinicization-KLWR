@@ -1,6 +1,6 @@
 # GenerateReferenceFont.ps1
-# 使用预定义的字符集文件（7000汉字+符号+英文）生成完整的 XNA 二进制字库
-# 字符集文件应为 UTF-8 无 BOM 格式，每行可包含任意字符
+# 从 Localization 翻译文件中提取实际使用的字符，生成完整的 XNA 二进制字库
+# 字符集自动从 Localization/*.json 中提取，无需手动维护
 
 $ErrorActionPreference = "Stop"
 $ScriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
@@ -16,17 +16,9 @@ $Config = Get-Content $ConfigFile | ConvertFrom-Json
 
 $BMFontExe = $Config.global.bmfontExe
 $XnaFontRebuilder = $Config.global.xnaFontRebuilder
-$SourceFont = "ShangguRound-Bold.ttf"   # 改用已验证兼容的字体
+$SourceFont = "ShangguRound-Bold.ttf"   # 使用已验证的字体
 $LatinCompensation = $Config.conversion.latinCompensation
 $CharSpacing = $Config.conversion.charSpacing
-
-# 字符集文件路径（直接使用您提供的文件）
-$CharsetFile = Join-Path $ScriptDir "7000汉字 符号 英文字符集.txt"
-if (-not (Test-Path $CharsetFile)) {
-    Write-Host "✗ 字符集文件不存在: $CharsetFile" -ForegroundColor Red
-    Write-Host "  请将文件放在 font_work/ 目录下" -ForegroundColor Yellow
-    exit 1
-}
 
 # 字体列表（从 config.json 读取）
 $fontConfigs = @{}
@@ -40,31 +32,61 @@ foreach ($fontName in $Config.fonts.PSObject.Properties.Name) {
     }
 }
 
-# ---- 函数：从字符集文件中提取所有唯一字符 ----
+# ---- 函数：从 Localization 中提取所有字符 ----
 function Get-AllCharacters {
-    $content = Get-Content -Path $CharsetFile -Raw -Encoding UTF8
+    $localizationDir = Join-Path $ScriptDir "..\Localization"
+    if (-not (Test-Path $localizationDir)) {
+        Write-Host "✗ Localization 目录不存在: $localizationDir" -ForegroundColor Red
+        exit 1
+    }
     $allChars = [System.Collections.Generic.HashSet[char]]::new()
 
-    foreach ($c in $content.ToCharArray()) {
-        if ([char]::IsControl($c) -and $c -notin "`t", "`n", "`r") { continue }
-        $null = $allChars.Add($c)
+    # 递归提取所有 JSON 字符串值（忽略键名）
+    function ExtractValues($obj) {
+        if ($obj -is [string]) {
+            return $obj
+        } elseif ($obj -is [array]) {
+            $result = ""
+            foreach ($item in $obj) {
+                $result += ExtractValues($item)
+            }
+            return $result
+        } elseif ($obj -is [PSCustomObject] -or $obj -is [hashtable]) {
+            $result = ""
+            foreach ($prop in $obj.PSObject.Properties) {
+                $result += ExtractValues($prop.Value)
+            }
+            return $result
+        } else {
+            return ""
+        }
     }
 
+    Get-ChildItem -Path $localizationDir -Filter "*.json" | ForEach-Object {
+        $json = Get-Content $_.FullName -Raw | ConvertFrom-Json
+        $text = ExtractValues($json)
+        foreach ($c in $text.ToCharArray()) {
+            if ([char]::IsControl($c) -and $c -notin "`t", "`n", "`r") { continue }
+            $null = $allChars.Add($c)
+        }
+    }
+
+    # 强制添加 ASCII 可见字符（英文、数字、标点）
     for ($i = 32; $i -le 126; $i++) {
         $null = $allChars.Add([char]$i)
     }
 
     $charList = $allChars | Where-Object { $_ -ne $null } | Sort-Object
-    Write-Host "✓ 从字符集文件中提取到 $($charList.Count) 个唯一字符" -ForegroundColor Green
+    Write-Host "✓ 从 Localization 提取到 $($charList.Count) 个唯一字符" -ForegroundColor Green
     return $charList
 }
 
-# ---- 调用 BMFont 命令行（修正输出路径） ----
+# ---- 调用 BMFont 命令行 ----
 function Invoke-BMFontDirect {
     param(
         [string]$SourceFontPath,
         [string]$CharsFile,
-        [string]$OutputPrefix,      # 相对路径，如 "Combat_Crit\Combat_Crit"
+        [string]$OutputPrefix,
         [int]$FontSize,
         [int]$LineHeight,
         [int]$TextureWidth,
@@ -106,7 +128,7 @@ function Invoke-BMFontDirect {
 # 1. 提取字符集
 $chars = Get-AllCharacters
 
-# 生成字符码点文件
+# 生成字符码点文件（每行一个十六进制码点）
 $charsFilePath = Join-Path $ScriptDir "charlist.txt"
 $chars | ForEach-Object { ([int]$_).ToString("X4") } | Out-File -FilePath $charsFilePath -Encoding ASCII
 Write-Host "✓ 字符码点列表已保存到: $charsFilePath" -ForegroundColor Green
@@ -136,15 +158,15 @@ foreach ($fontName in $fontConfigs.Keys) {
     $outputDir = Join-Path $ScriptDir $relOutputDir
     if (-not (Test-Path $outputDir)) { New-Item -ItemType Directory -Force -Path $outputDir | Out-Null }
 
-    # 输出前缀使用相对路径（相对于 font_work 目录），不含 ".\"
+    # 输出前缀使用相对路径（相对于 font_work 目录）
     $prefix = "$relOutputDir\$fontName"
 
     Write-Host "`n生成字体: $fontName" -ForegroundColor Cyan
     Write-Host "  输出前缀: $prefix" -ForegroundColor Gray
 
     try {
-        # 调用 BMFont 生成
-        Invoke-BMFontDirect -SourceFontPath $sourceFontPath -CharsFile $charsFilePath -OutputPrefix $prefix -FontSize 36 -LineHeight 44 -TextureWidth 4096 -TextureHeight 4096 -Padding 2 -Spacing 1
+        # 调用 BMFont 生成（使用较小字号以确保成功率）
+        Invoke-BMFontDirect -SourceFontPath $sourceFontPath -CharsFile $charsFilePath -OutputPrefix $prefix -FontSize 24 -LineHeight 30 -TextureWidth 2048 -TextureHeight 2048 -Padding 2 -Spacing 1
         
         # 检查生成的文件（绝对路径）
         $fntFile = Join-Path $ScriptDir "$prefix.fnt"
