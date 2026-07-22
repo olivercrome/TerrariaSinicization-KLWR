@@ -4,6 +4,15 @@ on:
   push:
     branches: [ main, master ]
   workflow_dispatch:
+    inputs:
+      config_style:
+        description: '选择字体配置'
+        required: true
+        default: 'config-FABU.json'
+        type: choice
+        options:
+          - config-FABU.json
+          - config-ZIYONG.json
 
 jobs:
   build:
@@ -27,17 +36,20 @@ jobs:
       shell: pwsh
       run: |
         cd font_work
-        .\FontXnaBuilder.ps1
+        $config = "${{ github.event.inputs.config_style }}"
+        if (-not $config) { $config = "config-FABU.json" }
+        Write-Host "使用配置文件: $config"
+        .\FontXnaBuilder.ps1 -ConfigFile $config
 
-    # ⬇️ 新增：上传字体中间产物 ⬇️
     - name: 📤 Upload font intermediate files (.bmfc / .fnt / .png)
       uses: actions/upload-artifact@v7
       with:
         name: font-intermediate-files
         path: |
-          font_work/*/
+          font_work/*.bmfc
+          font_work/*/*.fnt
+          font_work/*/*.png
         if-no-files-found: warn
-    # ⬆️ 新增结束 ⬆️
 
     - name: Build UnpackTerrariaTextAsset
       run: |

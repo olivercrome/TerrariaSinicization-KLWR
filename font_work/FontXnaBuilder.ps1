@@ -6,12 +6,13 @@ $ErrorActionPreference = "Stop"
 $ScriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
 Push-Location $ScriptDir
 
-# 读取配置文件
-$ConfigFile = Join-Path $ScriptDir "config.json"
-if (-not (Test-Path $ConfigFile)) {
-    Write-Host "✗ 配置文件不存在: $ConfigFile" -ForegroundColor Red
+$ConfigPath = Join-Path $ScriptDir $ConfigFile
+if (-not (Test-Path $ConfigPath)) {
+    Write-Host "✗ 配置文件不存在: $ConfigPath" -ForegroundColor Red
     exit 1
 }
+$Config = Get-Content $ConfigPath | ConvertFrom-Json
+Write-Host "使用配置文件: $ConfigFile" -ForegroundColor Cyan
 
 $Config = Get-Content $ConfigFile | ConvertFrom-Json
 
