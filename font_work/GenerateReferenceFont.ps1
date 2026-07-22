@@ -16,7 +16,7 @@ $Config = Get-Content $ConfigFile | ConvertFrom-Json
 
 $BMFontExe = $Config.global.bmfontExe
 $XnaFontRebuilder = $Config.global.xnaFontRebuilder
-$SourceFont = "NotoSerifCJKsc-Medium.otf"   # 固定使用此字体
+$SourceFont = "ShangguRound-Bold.ttf"   # 改用已验证兼容的字体
 $LatinCompensation = $Config.conversion.latinCompensation
 $CharSpacing = $Config.conversion.charSpacing
 
@@ -49,7 +49,6 @@ function Get-AllCharacters {
     foreach ($c in $content.ToCharArray()) {
         # 跳过控制字符（保留空格和换行符？实际上文件中可能有换行，但为了字符集，我们保留所有可见字符）
         if ([char]::IsControl($c) -and $c -notin "`t", "`n", "`r") { continue }
-        # 跳过空格？但空格也可能需要，但 BMFont 通常不需要空格字符（空格由 advance 决定），但保留也无妨
         $null = $allChars.Add($c)
     }
 
@@ -63,7 +62,7 @@ function Get-AllCharacters {
     return $charList
 }
 
-# ---- 调用 BMFont 命令行 ----
+# ---- 调用 BMFont 命令行（修正版，只执行一次并捕获输出） ----
 function Invoke-BMFontDirect {
     param(
         [string]$SourceFontPath,
@@ -76,7 +75,7 @@ function Invoke-BMFontDirect {
         [int]$Padding,
         [int]$Spacing
     )
-    $args = @(
+    $argList = @(
         "-s", $FontSize,
         "-l", $LineHeight,
         "-w", $TextureWidth,
@@ -87,11 +86,24 @@ function Invoke-BMFontDirect {
         "-o", "`"$OutputPrefix`"",
         "-f", "`"$SourceFontPath`""
     )
-    $cmd = "$BMFontExe " + ($args -join " ")
+    $cmd = "$BMFontExe " + ($argList -join " ")
     Write-Host "  执行: $cmd" -ForegroundColor Gray
-    Invoke-Expression $cmd
-    if ($LASTEXITCODE -ne 0) {
-        throw "BMFont 生成失败，退出代码: $LASTEXITCODE"
+    
+    # 执行命令，捕获所有输出（含错误流）
+    $output = Invoke-Expression $cmd 2>&1
+    $exitCode = $LASTEXITCODE
+    
+    if ($exitCode -ne 0) {
+        Write-Host "  ❌ BMFont 执行失败，退出代码: $exitCode" -ForegroundColor Red
+        Write-Host "  错误输出:" -ForegroundColor Red
+        $output | ForEach-Object { Write-Host "    $_" -ForegroundColor Red }
+        throw "BMFont 生成失败，退出代码: $exitCode"
+    } else {
+        # 如果有标准输出，可以打印（用于调试）
+        if ($output) {
+            Write-Host "  输出信息:" -ForegroundColor Gray
+            $output | ForEach-Object { Write-Host "    $_" -ForegroundColor Gray }
+        }
     }
 }
 
@@ -101,7 +113,6 @@ $chars = Get-AllCharacters
 
 # 生成字符码点文件（每行一个十六进制码点）
 $charsFilePath = Join-Path $ScriptDir "charlist.txt"
-# 注意：使用 [int]$_ 转换 char 为 Unicode 码点
 $chars | ForEach-Object { ([int]$_).ToString("X4") } | Out-File -FilePath $charsFilePath -Encoding ASCII
 Write-Host "✓ 字符码点列表已保存到: $charsFilePath" -ForegroundColor Green
 
@@ -135,6 +146,7 @@ foreach ($fontName in $fontConfigs.Keys) {
     try {
         # 调用 BMFont 直接生成
         Invoke-BMFontDirect -SourceFontPath $sourceFontPath -CharsFile $charsFilePath -OutputPrefix $prefix -FontSize 36 -LineHeight 44 -TextureWidth 4096 -TextureHeight 4096 -Padding 2 -Spacing 1
+        
         # 检查生成的文件
         $fntFile = "$prefix.fnt"
         $pngFile = "$prefix`_0.png"
