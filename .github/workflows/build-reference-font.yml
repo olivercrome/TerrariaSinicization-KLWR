@@ -1,0 +1,56 @@
+name: Build Reference Font (NotoSerifCJK)
+
+on:
+  push:
+    branches: [ main, master ]
+    paths:
+      - 'Localization/**'
+      - 'font_work/GenerateReferenceFont.ps1'
+  workflow_dispatch:
+    inputs:
+      font_size:
+        description: '字号（默认36）'
+        required: false
+        default: '36'
+      line_height:
+        description: '行高（默认44）'
+        required: false
+        default: '44'
+
+jobs:
+  build-font:
+    runs-on: windows-latest
+    steps:
+      - name: 检出代码
+        uses: actions/checkout@v4
+
+      - name: 安装 .NET SDK
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+
+      - name: 构建 XnaFontRebuilder
+        run: |
+          cd font_work\XnaFontRebuilder
+          dotnet build -c Release
+
+      - name: 生成参考字库
+        shell: pwsh
+        run: |
+          cd font_work
+          .\GenerateReferenceFont.ps1
+        env:
+          # 如果需要，可以传递输入参数（脚本已硬编码字号，但后续可优化）
+          FONT_SIZE: ${{ github.event.inputs.font_size || '36' }}
+          LINE_HEIGHT: ${{ github.event.inputs.line_height || '44' }}
+
+      - name: 上传字库产物（.txt, .fnt, .png, charlist.txt）
+        uses: actions/upload-artifact@v4
+        with:
+          name: reference-fonts
+          path: |
+            font_work/*/*.txt
+            font_work/*/*.fnt
+            font_work/*/*.png
+            font_work/charlist.txt
+          if-no-files-found: warn
