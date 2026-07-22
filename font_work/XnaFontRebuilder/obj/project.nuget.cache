@@ -1,0 +1,10 @@
+{
+  "version": 2,
+  "dgSpecHash": "KSptFMd1So9LYncYTU9ONcxaXoAup/ILknVMCtSGhrlLHVQrWSiPPGimQxHGzrAj7OVPawb6O+yIXHIsXzd8kw==",
+  "success": true,
+  "projectFilePath": "/data/data/com.termux/files/home/TerrariaSinicization/font_work/XnaFontRebuilder/XnaFontRebuilder.csproj",
+  "expectedPackageFiles": [
+    "/data/data/com.termux/files/home/.nuget/packages/sixlabors.fonts/2.1.3/sixlabors.fonts.2.1.3.nupkg.sha512"
+  ],
+  "logs": []
+}

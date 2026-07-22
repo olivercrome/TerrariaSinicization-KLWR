@@ -1,0 +1,91 @@
+{
+  "format": 1,
+  "restore": {
+    "/data/data/com.termux/files/home/TerrariaSinicization/UnpackTerrariaTextAsset/UnpackTerrariaTextAsset.csproj": {}
+  },
+  "projects": {
+    "/data/data/com.termux/files/home/TerrariaSinicization/UnpackTerrariaTextAsset/UnpackTerrariaTextAsset.csproj": {
+      "version": "1.0.0",
+      "restore": {
+        "projectUniqueName": "/data/data/com.termux/files/home/TerrariaSinicization/UnpackTerrariaTextAsset/UnpackTerrariaTextAsset.csproj",
+        "projectName": "UnpackTerrariaTextAsset",
+        "projectPath": "/data/data/com.termux/files/home/TerrariaSinicization/UnpackTerrariaTextAsset/UnpackTerrariaTextAsset.csproj",
+        "packagesPath": "/data/data/com.termux/files/home/.nuget/packages/",
+        "outputPath": "/data/data/com.termux/files/home/TerrariaSinicization/UnpackTerrariaTextAsset/obj/",
+        "projectStyle": "PackageReference",
+        "configFilePaths": [
+          "/data/data/com.termux/files/home/.nuget/NuGet/NuGet.Config"
+        ],
+        "originalTargetFrameworks": [
+          "net8.0"
+        ],
+        "sources": {
+          "https://api.nuget.org/v3/index.json": {}
+        },
+        "frameworks": {
+          "net8.0": {
+            "targetAlias": "net8.0",
+            "projectReferences": {}
+          }
+        },
+        "warningProperties": {
+          "warnAsError": [
+            "NU1605"
+          ]
+        }
+      },
+      "frameworks": {
+        "net8.0": {
+          "targetAlias": "net8.0",
+          "dependencies": {
+            "AssetRipper.TextureDecoder": {
+              "target": "Package",
+              "version": "[2.6.1, )"
+            },
+            "BCnEncoder.Net": {
+              "target": "Package",
+              "version": "[2.3.0, )"
+            },
+            "BCnEncoder.Net.ImageSharp": {
+              "target": "Package",
+              "version": "[1.1.3, )"
+            },
+            "Mono.Cecil": {
+              "target": "Package",
+              "version": "[0.11.6, )"
+            },
+            "Newtonsoft.Json": {
+              "target": "Package",
+              "version": "[13.0.4, )"
+            },
+            "Samboy063.LibCpp2IL": {
+              "target": "Package",
+              "version": "[2022.0.7.2, )"
+            },
+            "SixLabors.ImageSharp": {
+              "target": "Package",
+              "version": "[3.1.12, )"
+            }
+          },
+          "imports": [
+            "net461",
+            "net462",
+            "net47",
+            "net471",
+            "net472",
+            "net48",
+            "net481"
+          ],
+          "assetTargetFallback": true,
+          "warn": true,
+          "frameworkReferences": {
+            "Microsoft.NETCore.App": {
+              "privateAssets": "all"
+            }
+          },
+          "runtimeIdentifierGraphPath": "/data/data/com.termux/files/usr/lib/dotnet/sdk/8.0.128/PortableRuntimeIdentifierGraph.json"
+        }
+      }
+    }
+  }
+}
