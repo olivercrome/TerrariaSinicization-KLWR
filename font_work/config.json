@@ -13,7 +13,7 @@
       "txtFile": "Item_Stack.txt",
       "description": "物品堆叠数字字体",
       "charInfoFile": "./FontInfo/Item_Stack.txt",
-      "sourceFont": "./vivoSans-Regular.ttf"
+      "sourceFont": "./ChillRoundGothic_Normal.ttf"
     },
     "Combat_Crit": {
       "configFile": "./Combat_Crit.bmfc",
