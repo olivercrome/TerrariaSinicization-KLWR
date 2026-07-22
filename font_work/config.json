@@ -13,7 +13,7 @@
       "txtFile": "Item_Stack.txt",
       "description": "物品堆叠数字字体",
       "charInfoFile": "./FontInfo/Item_Stack.txt",
-      "sourceFont": "./ChillRoundGothic_Normal.ttf"
+      "sourceFont": "./NotoSerifCJKsc-Medium.otf"
     },
     "Combat_Crit": {
       "configFile": "./Combat_Crit.bmfc",
@@ -22,6 +22,7 @@
       "txtFile": "Combat_Crit.txt",
       "description": "战斗暴击数字字体",
       "charInfoFile": "./FontInfo/Combat_Crit.txt"
+      "sourceFont": "./MonuYueDong-Bd1.5.ttf"
     },
     "Combat_Text": {
       "configFile": "./Combat_Text.bmfc",
@@ -30,6 +31,7 @@
       "txtFile": "Combat_Text.txt",
       "description": "战斗文字字体",
       "charInfoFile": "./FontInfo/Combat_Text.txt"
+      "sourceFont": "./MonuYueDong-Bd1.5.ttf"
     },
     "Death_Text": {
       "configFile": "./Death_Text.bmfc",
@@ -38,7 +40,7 @@
       "txtFile": "Death_Text.txt",
       "description": "死亡文字字体",
       "charInfoFile": "./FontInfo/Death_Text.txt",
-      "sourceFont": "./MonuYueDong-Bd1.5.ttf"
+      "sourceFont": "./BlackSugarPlumCandy-Bold.ttf"
     },
     "Mouse_Text": {
       "configFile": "./Mouse_Text.bmfc",
