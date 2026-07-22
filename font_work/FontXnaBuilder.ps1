@@ -1,5 +1,6 @@
 # FontXnaBuilder.ps1
 # 从 FontInfo 字符信息生成字体 - 支持批量生成和单独生成
+# 支持每个字体使用独立的源字体（通过 config.json 中的 sourceFont 字段）
 
 $ErrorActionPreference = "Stop"
 $ScriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
@@ -14,24 +15,30 @@ if (-not (Test-Path $ConfigFile)) {
 
 $Config = Get-Content $ConfigFile | ConvertFrom-Json
 
-# 字体配置列表
+# 字体配置列表（包含可选的 sourceFont）
 $fontConfigs = @{}
 foreach ($fontName in $Config.fonts.PSObject.Properties.Name) {
     $fontData = $Config.fonts.$fontName
     $fontConfigs[$fontName] = @{
-        ConfigFile = $fontData.configFile
-        OutputDir = $fontData.outputDir
-        FontFile = $fontData.fontFile
-        TxtFile = $fontData.txtFile
-        Description = $fontData.description
-        CharInfoFile = $fontData.charInfoFile
+        ConfigFile    = $fontData.configFile
+        OutputDir     = $fontData.outputDir
+        FontFile      = $fontData.fontFile
+        TxtFile       = $fontData.txtFile
+        Description   = $fontData.description
+        CharInfoFile  = $fontData.charInfoFile
+        # 读取 sourceFont，如果不存在则为 $null
+        SourceFont    = if ($fontData.PSObject.Properties.Name -contains 'sourceFont') {
+                            $fontData.sourceFont
+                        } else {
+                            $null
+                        }
     }
 }
 
 # 全局配置
 $BMFontExe = $Config.global.bmfontExe
 $XnaFontRebuilder = $Config.global.xnaFontRebuilder
-$SourceFont = $Config.global.sourceFont
+$GlobalSourceFont = $Config.global.sourceFont
 $FontInfoDir = $Config.global.fontInfoDir
 
 # 转换参数
@@ -59,11 +66,11 @@ function Test-Environment {
     Write-Host "  ✓ bmfont64.com" -ForegroundColor Green
     
     # 检查源字体
-    if (-not (Test-Path $SourceFont)) {
-        Write-Host "  ✗ 未找到 font.otf" -ForegroundColor Red
+    if (-not (Test-Path $GlobalSourceFont)) {
+        Write-Host "  ✗ 未找到全局源字体: $GlobalSourceFont" -ForegroundColor Red
         return $false
     }
-    Write-Host "  ✓ font.otf" -ForegroundColor Green
+    Write-Host "  ✓ 全局源字体: $GlobalSourceFont" -ForegroundColor Green
     
     # 检查 FontInfo 目录
     if (-not (Test-Path $FontInfoDir)) {
@@ -109,7 +116,7 @@ function Build-XnaFontRebuilder {
     return $true
 }
 
-# 公共函数：生成配置文件
+# 公共函数：生成配置文件（支持每个字体独立源字体）
 function Generate-ConfigFile {
     param(
         [string]$FontName,
@@ -125,13 +132,14 @@ function Generate-ConfigFile {
     }
     
     try {
-        # 确定使用哪个字体文件
-        $fontSource = if ($FontConfig.SourceFont) {
-            $FontConfig.SourceFont
+        # 确定使用哪个字体文件（优先使用字体自带的 sourceFont，否则用全局）
+        if ($FontConfig.SourceFont) {
+            $fontSource = $FontConfig.SourceFont
+            Write-Host "    使用字体（专属）: $fontSource" -ForegroundColor Gray
         } else {
-            $SourceFont   # 全局字体
+            $fontSource = $GlobalSourceFont
+            Write-Host "    使用字体（全局）: $fontSource" -ForegroundColor Gray
         }
-        Write-Host "    使用字体: $fontSource" -ForegroundColor Gray
 
         # 使用 --build-cfg-auto 命令生成配置文件
         $cmdArgs = @(
@@ -249,12 +257,10 @@ function Generate-Font {
     Write-Host "    ✓ .txt: $([math]::Round($txtSize/1KB, 2)) KB" -ForegroundColor Green
     Write-Host "    ✓ 纹理: $pngCount 张图片" -ForegroundColor Green
     
-    # 删除临时配置文件（已禁用，保留中间产物）
-    # if (Test-Path $FontConfig.ConfigFile) {
-     #     Remove-Item $FontConfig.ConfigFile -Force
-     #     Write-Host "    ✓ 删除临时配置文件: $($FontConfig.ConfigFile)"  -ForegroundColor Green
-  # }
-Write-Host "    ✓ 保留临时配置文件: $($FontConfig.ConfigFile)" -ForegroundColor Yellow
+    # 保留临时配置文件
+    if (Test-Path $FontConfig.ConfigFile) {
+        Write-Host "    ✓ 保留临时配置文件: $($FontConfig.ConfigFile)" -ForegroundColor Green
+    }
     
     $endTime = Get-Date
     $duration = ($endTime - $startTime).TotalSeconds
@@ -281,10 +287,11 @@ function Show-AvailableFonts {
 function Show-Help {
     Write-Host @"
 ╔══════════════════════════════════════════════════════════════╗
-║                    字体生成工具 v3.0                         ║
+║                    字体生成工具 v3.1                         ║
 ╠══════════════════════════════════════════════════════════════╣
 ║ 功能: 从 FontInfo 目录的字符信息文件生成字体                 ║
 ║       自动生成配置文件 -> 调用 BMFont -> 转换为 XNA 格式     ║
+║       支持每个字体独立指定源字体（config.json 中 sourceFont）║
 ╠══════════════════════════════════════════════════════════════╣
 ║ 用法:                                                        ║
 ║   .\FontXnaBuilder.ps1 [参数]                                ║
@@ -328,7 +335,7 @@ function Main {
     
     # 显示标题
     Write-Host "╔══════════════════════════════════════════════════════════════╗" -ForegroundColor Cyan
-    Write-Host "║                    字体批量生成工具 v3.0                      ║" -ForegroundColor Cyan
+    Write-Host "║                    字体批量生成工具 v3.1                      ║" -ForegroundColor Cyan
     Write-Host "╚══════════════════════════════════════════════════════════════╝" -ForegroundColor Cyan
     Write-Host "开始时间: $(Get-Date -Format 'yyyy-MM-dd HH:mm:ss')" -ForegroundColor Yellow
     
