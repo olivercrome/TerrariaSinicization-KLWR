@@ -2,7 +2,7 @@
   "global": {
     "bmfontExe": "./bmfont64.com",
     "xnaFontRebuilder": "./XnaFontRebuilder/bin/Release/net8.0/XnaFontRebuilder.dll",
-    "sourceFont": "./WenYuanRoundedSC-Bold.ttf",
+    "sourceFont": "./MonuYueDong-Bd1.5.ttf",
     "fontInfoDir": "./FontInfo"
   },
   "fonts": {
@@ -13,7 +13,7 @@
       "txtFile": "Item_Stack.txt",
       "description": "物品堆叠数字字体",
       "charInfoFile": "./FontInfo/Item_Stack.txt",
-      "sourceFont": "./NotoSerifCJKsc-Medium.otf"
+      "sourceFont": "./MonuYueDong-Bd1.5.ttf"
     },
     "Combat_Crit": {
       "configFile": "./Combat_Crit.bmfc",
@@ -40,7 +40,7 @@
       "txtFile": "Death_Text.txt",
       "description": "死亡文字字体",
       "charInfoFile": "./FontInfo/Death_Text.txt",
-      "sourceFont": "./BlackSugarPlumCandy-Bold.ttf"
+      "sourceFont": "./MonuYueDong-Bd1.5.ttf"
     },
     "Mouse_Text": {
       "configFile": "./Mouse_Text.bmfc",
