@@ -2,6 +2,7 @@
 # 从 FontInfo 字符信息生成字体 - 支持批量生成和单独生成
 # 支持每个字体使用独立的源字体（通过 config.json 中的 sourceFont 字段）
 # 支持通过 -ConfigFile 参数指定配置文件
+# 如果 configFile 已存在，则直接使用，不再重新生成
 
 param(
     [string]$ConfigFile = "config.json"
@@ -189,9 +190,21 @@ function Generate-Font {
     
     $startTime = Get-Date
     
-    # 步骤0: 生成配置文件
-    if (-not (Generate-ConfigFile -FontName $FontName -FontConfig $FontConfig)) {
-        return $false
+    # 步骤0: 检查配置文件是否已存在
+    $configFullPath = Join-Path $ScriptDir $FontConfig.ConfigFile
+    if (Test-Path $configFullPath) {
+        Write-Host "  [0/3] 使用现有配置文件: $($FontConfig.ConfigFile)" -ForegroundColor Yellow
+    } else {
+        Write-Host "  [0/3] 生成配置文件..." -ForegroundColor Yellow
+        if (-not (Generate-ConfigFile -FontName $FontName -FontConfig $FontConfig)) {
+            return $false
+        }
+        # 重新获取路径（可能已生成）
+        $configFullPath = Join-Path $ScriptDir $FontConfig.ConfigFile
+        if (-not (Test-Path $configFullPath)) {
+            Write-Host "  ✗ 配置文件生成失败: $($FontConfig.ConfigFile)" -ForegroundColor Red
+            return $false
+        }
     }
     
     # 确保输出目录存在
@@ -206,7 +219,7 @@ function Generate-Font {
     # 步骤1: 生成 BMFont
     Write-Host "  [1/3] 生成 BMFont 文件..." -ForegroundColor Yellow
     try {
-        $configAbs = Resolve-Path $FontConfig.ConfigFile
+        $configAbs = Resolve-Path $configFullPath
         $fontAbs = Join-Path $PWD $fontPath
         
         $process = Start-Process -FilePath $BMFontExe `
@@ -263,8 +276,8 @@ function Generate-Font {
     Write-Host "    ✓ 纹理: $pngCount 张图片" -ForegroundColor Green
     
     # 保留临时配置文件
-    if (Test-Path $FontConfig.ConfigFile) {
-        Write-Host "    ✓ 保留临时配置文件: $($FontConfig.ConfigFile)" -ForegroundColor Green
+    if (Test-Path $configFullPath) {
+        Write-Host "    ✓ 保留配置文件: $($FontConfig.ConfigFile)" -ForegroundColor Green
     }
     
     $endTime = Get-Date
