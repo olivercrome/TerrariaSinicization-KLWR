@@ -7,7 +7,7 @@
   },
   "fonts": {
     "Item_Stack": {
-      "configFile": "./Item_Stack.bmfc",
+      "configFile": "./Item_Stack_full.bmfc",
       "outputDir": "./Item_Stack",
       "fontFile": "Item_Stack.fnt",
       "txtFile": "Item_Stack.txt",
@@ -16,7 +16,7 @@
       "sourceFont": "./MonuYueDong-Bd1.5.ttf"
     },
     "Combat_Crit": {
-      "configFile": "./Combat_Crit.bmfc",
+      "configFile": "./Combat_Crit_full.bmfc",
       "outputDir": "./Combat_Crit",
       "fontFile": "Combat_Crit.fnt",
       "txtFile": "Combat_Crit.txt",
@@ -25,7 +25,7 @@
       "sourceFont": "./MonuYueDong-Bd1.5.ttf"
     },
     "Combat_Text": {
-      "configFile": "./Combat_Text.bmfc",
+      "configFile": "./Combat_Text_full.bmfc",
       "outputDir": "./Combat_Text",
       "fontFile": "Combat_Text.fnt",
       "txtFile": "Combat_Text.txt",
@@ -34,7 +34,7 @@
       "sourceFont": "./MonuYueDong-Bd1.5.ttf"
     },
     "Death_Text": {
-      "configFile": "./Death_Text.bmfc",
+      "configFile": "./Death_Text_full.bmfc",
       "outputDir": "./Death_Text",
       "fontFile": "Death_Text.fnt",
       "txtFile": "Death_Text.txt",
@@ -43,7 +43,7 @@
       "sourceFont": "./MonuYueDong-Bd1.5.ttf"
     },
     "Mouse_Text": {
-      "configFile": "./Mouse_Text.bmfc",
+      "configFile": "./Mouse_Text_full.bmfc",
       "outputDir": "./Mouse_Text",
       "fontFile": "Mouse_Text.fnt",
       "txtFile": "Mouse_Text.txt",
