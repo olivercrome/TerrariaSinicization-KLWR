@@ -16,7 +16,7 @@
       "sourceFont": "./MonuYueDong-Bd1.5.ttf"
     },
     "Combat_Crit": {
-      "configFile": "./Combat_Crit_full.bmfc",
+      "configFile": "./Combat_Crit.bmfc",
       "outputDir": "./Combat_Crit",
       "fontFile": "Combat_Crit.fnt",
       "txtFile": "Combat_Crit.txt",
@@ -25,7 +25,7 @@
       "sourceFont": "./MonuYueDong-Bd1.5.ttf"
     },
     "Combat_Text": {
-      "configFile": "./Combat_Text_full.bmfc",
+      "configFile": "./Combat_Text.bmfc",
       "outputDir": "./Combat_Text",
       "fontFile": "Combat_Text.fnt",
       "txtFile": "Combat_Text.txt",
