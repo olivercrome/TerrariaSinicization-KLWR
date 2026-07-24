@@ -25,8 +25,10 @@ $Config = Get-Content $ConfigPath | ConvertFrom-Json
 $fontConfigs = @{}
 foreach ($fontName in $Config.fonts.PSObject.Properties.Name) {
     $fontData = $Config.fonts.$fontName
+    # ★ 修正：规范化 configFile，去除开头的 ./ （如果存在）
+    $normalizedConfigFile = $fontData.configFile -replace '^\./', ''
     $fontConfigs[$fontName] = @{
-        ConfigFile    = $fontData.configFile
+        ConfigFile    = $normalizedConfigFile   # 使用规范化后的路径
         OutputDir     = $fontData.outputDir
         FontFile      = $fontData.fontFile
         TxtFile       = $fontData.txtFile
@@ -148,6 +150,7 @@ function Generate-ConfigFile {
         }
 
         # 使用 --build-cfg-auto 命令生成配置文件
+        # ★ 注意：此处 $FontConfig.ConfigFile 已经是规范化路径（不含 ./）
         $cmdArgs = @(
             "`"$XnaFontRebuilder`""
             "--build-cfg-auto"
@@ -191,7 +194,7 @@ function Generate-Font {
     $startTime = Get-Date
     
     # 步骤0: 检查配置文件是否已存在
-    # ★修正：直接使用相对路径（当前目录已是 $ScriptDir）
+    # ★ 使用规范化路径（不含 ./）
     $configFullPath = $FontConfig.ConfigFile
     if (Test-Path $configFullPath) {
         Write-Host "  [0/3] 使用现有配置文件: $configFullPath" -ForegroundColor Yellow
@@ -220,7 +223,7 @@ function Generate-Font {
     # 步骤1: 生成 BMFont
     Write-Host "  [1/3] 生成 BMFont 文件..." -ForegroundColor Yellow
     try {
-        # ★修正：Resolve-Path 能正确解析相对路径
+        # ★ 使用 Resolve-Path 获取绝对路径（必须保证文件存在）
         $configAbs = Resolve-Path $configFullPath
         $fontAbs = Join-Path $PWD $fontPath
         
@@ -402,7 +405,7 @@ function Main {
     $configStatus = @{}
     $missingCount = 0
     foreach ($name in $fontsToGenerate.Keys | Sort-Object) {
-        # ★修正：直接使用相对路径
+        # ★ 使用规范化路径（不含 ./）
         $cfgPath = $fontsToGenerate[$name].ConfigFile
         $exists = Test-Path $cfgPath
         $configStatus[$name] = $exists
