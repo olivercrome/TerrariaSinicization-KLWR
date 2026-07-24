@@ -43,7 +43,7 @@
       "sourceFont": "./BlackSugarPlumCandy-Bold.ttf"
     },
     "Mouse_Text": {
-      "configFile": "./Mouse_Text_full.bmfc",
+      "configFile": "./Mouse_Text.bmfc",
       "outputDir": "./Mouse_Text",
       "fontFile": "Mouse_Text.fnt",
       "txtFile": "Mouse_Text.txt",
