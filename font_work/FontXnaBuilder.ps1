@@ -11,6 +11,22 @@ param(
 $ErrorActionPreference = "Stop"
 $ScriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
 Push-Location $ScriptDir
+# 强制切换工作目录到脚本所在目录
+Set-Location $ScriptDir
+
+# 辅助函数：检查文件是否存在（使用绝对路径 + .NET 方法）
+function FileExists([string]$path) {
+    if ([string]::IsNullOrEmpty($path)) { return $false }
+    # 尝试基于当前目录解析相对路径
+    $fullPath = Join-Path (Get-Location) $path
+    return [System.IO.File]::Exists($fullPath)
+}
+
+# 辅助函数：获取文件的绝对路径（用于日志）
+function Get-FullPath([string]$path) {
+    if ([string]::IsNullOrEmpty($path)) { return $null }
+    return Join-Path (Get-Location) $path
+}
 
 # 读取配置文件
 $ConfigPath = Join-Path $ScriptDir $ConfigFile
@@ -25,16 +41,15 @@ $Config = Get-Content $ConfigPath | ConvertFrom-Json
 $fontConfigs = @{}
 foreach ($fontName in $Config.fonts.PSObject.Properties.Name) {
     $fontData = $Config.fonts.$fontName
-    # ★ 修正：规范化 configFile，去除开头的 ./ （如果存在）
+    # 规范化 configFile，去除开头的 ./ （如果存在）
     $normalizedConfigFile = $fontData.configFile -replace '^\./', ''
     $fontConfigs[$fontName] = @{
-        ConfigFile    = $normalizedConfigFile   # 使用规范化后的路径
+        ConfigFile    = $normalizedConfigFile
         OutputDir     = $fontData.outputDir
         FontFile      = $fontData.fontFile
         TxtFile       = $fontData.txtFile
         Description   = $fontData.description
         CharInfoFile  = $fontData.charInfoFile
-        # 读取 sourceFont，如果不存在则为 $null
         SourceFont    = if ($fontData.PSObject.Properties.Name -contains 'sourceFont') {
                             $fontData.sourceFont
                         } else {
@@ -67,28 +82,28 @@ function Test-Environment {
     Write-Host "  ✓ .NET SDK $dotnetVersion" -ForegroundColor Green
     
     # 检查 BMFont
-    if (-not (Test-Path $BMFontExe)) {
+    if (-not (FileExists $BMFontExe)) {
         Write-Host "  ✗ 未找到 bmfont64.com" -ForegroundColor Red
         return $false
     }
     Write-Host "  ✓ bmfont64.com" -ForegroundColor Green
     
     # 检查源字体
-    if (-not (Test-Path $GlobalSourceFont)) {
+    if (-not (FileExists $GlobalSourceFont)) {
         Write-Host "  ✗ 未找到全局源字体: $GlobalSourceFont" -ForegroundColor Red
         return $false
     }
     Write-Host "  ✓ 全局源字体: $GlobalSourceFont" -ForegroundColor Green
     
     # 检查 FontInfo 目录
-    if (-not (Test-Path $FontInfoDir)) {
+    if (-not (Test-Path $FontInfoDir -PathType Container)) {
         Write-Host "  ✗ 未找到 FontInfo 目录" -ForegroundColor Red
         return $false
     }
     Write-Host "  ✓ FontInfo 目录" -ForegroundColor Green
     
     # 检查 XnaFontRebuilder 项目
-    if (-not (Test-Path ".\XnaFontRebuilder\XnaFontRebuilder.csproj")) {
+    if (-not (Test-Path ".\XnaFontRebuilder\XnaFontRebuilder.csproj" -PathType Leaf)) {
         Write-Host "  ✗ 未找到 XnaFontRebuilder 项目" -ForegroundColor Red
         return $false
     }
@@ -101,7 +116,7 @@ function Test-Environment {
 function Build-XnaFontRebuilder {
     Write-Host "`n[构建 XnaFontRebuilder]" -ForegroundColor Cyan
     
-    if (-not (Test-Path $XnaFontRebuilder)) {
+    if (-not (FileExists $XnaFontRebuilder)) {
         Write-Host "  正在构建..." -ForegroundColor Yellow
         try {
             Push-Location ".\XnaFontRebuilder"
@@ -134,7 +149,7 @@ function Generate-ConfigFile {
     Write-Host "  [0/3] 生成配置文件..." -ForegroundColor Yellow
     
     # 检查字符信息文件是否存在
-    if (-not (Test-Path $FontConfig.CharInfoFile)) {
+    if (-not (FileExists $FontConfig.CharInfoFile)) {
         Write-Host "    ✗ 字符信息文件不存在: $($FontConfig.CharInfoFile)" -ForegroundColor Red
         return $false
     }
@@ -150,7 +165,6 @@ function Generate-ConfigFile {
         }
 
         # 使用 --build-cfg-auto 命令生成配置文件
-        # ★ 注意：此处 $FontConfig.ConfigFile 已经是规范化路径（不含 ./）
         $cmdArgs = @(
             "`"$XnaFontRebuilder`""
             "--build-cfg-auto"
@@ -166,7 +180,7 @@ function Generate-ConfigFile {
             throw "配置文件生成失败，退出代码: $LASTEXITCODE"
         }
         
-        if (-not (Test-Path $FontConfig.ConfigFile)) {
+        if (-not (FileExists $FontConfig.ConfigFile)) {
             throw "未找到生成的配置文件"
         }
         
@@ -194,9 +208,8 @@ function Generate-Font {
     $startTime = Get-Date
     
     # 步骤0: 检查配置文件是否已存在
-    # ★ 使用规范化路径（不含 ./）
     $configFullPath = $FontConfig.ConfigFile
-    if (Test-Path $configFullPath) {
+    if (FileExists $configFullPath) {
         Write-Host "  [0/3] 使用现有配置文件: $configFullPath" -ForegroundColor Yellow
     } else {
         Write-Host "  [0/3] 生成配置文件..." -ForegroundColor Yellow
@@ -205,14 +218,14 @@ function Generate-Font {
         }
         # 重新获取路径（可能已生成）
         $configFullPath = $FontConfig.ConfigFile
-        if (-not (Test-Path $configFullPath)) {
+        if (-not (FileExists $configFullPath)) {
             Write-Host "  ✗ 配置文件生成失败: $configFullPath" -ForegroundColor Red
             return $false
         }
     }
     
     # 确保输出目录存在
-    if (-not (Test-Path $FontConfig.OutputDir)) {
+    if (-not (Test-Path $FontConfig.OutputDir -PathType Container)) {
         New-Item -ItemType Directory -Path $FontConfig.OutputDir -Force | Out-Null
         Write-Host "  ✓ 创建输出目录: $($FontConfig.OutputDir)" -ForegroundColor Gray
     }
@@ -223,9 +236,9 @@ function Generate-Font {
     # 步骤1: 生成 BMFont
     Write-Host "  [1/3] 生成 BMFont 文件..." -ForegroundColor Yellow
     try {
-        # ★ 使用 Resolve-Path 获取绝对路径（必须保证文件存在）
-        $configAbs = Resolve-Path $configFullPath
-        $fontAbs = Join-Path $PWD $fontPath
+        # 获取配置文件的绝对路径
+        $configAbs = Join-Path (Get-Location) $configFullPath
+        $fontAbs = Join-Path (Get-Location) $fontPath
         
         $process = Start-Process -FilePath $BMFontExe `
             -ArgumentList "-c `"$configAbs`" -o `"$fontAbs`"" `
@@ -235,7 +248,7 @@ function Generate-Font {
             throw "BMFont 生成失败，退出代码: $($process.ExitCode)"
         }
         
-        if (-not (Test-Path $fontPath)) {
+        if (-not (FileExists $fontPath)) {
             throw "未找到生成的 .fnt 文件"
         }
         
@@ -251,14 +264,13 @@ function Generate-Font {
     # 步骤2: 转换格式（使用新的 --convert 命令）
     Write-Host "  [2/3] 转换为 TXT 格式..." -ForegroundColor Yellow
     try {
-        # 使用新的命令格式：--convert <input.fnt> <output.txt> [options]
         dotnet $XnaFontRebuilder --convert $fontPath $txtPath --latin-compensation $LatinCompensation --char-spacing $CharSpacing
         
         if ($LASTEXITCODE -ne 0) {
             throw "格式转换失败，退出代码: $LASTEXITCODE"
         }
         
-        if (-not (Test-Path $txtPath)) {
+        if (-not (FileExists $txtPath)) {
             throw "未找到生成的 .txt 文件"
         }
         
@@ -281,7 +293,7 @@ function Generate-Font {
     Write-Host "    ✓ 纹理: $pngCount 张图片" -ForegroundColor Green
     
     # 保留临时配置文件
-    if (Test-Path $configFullPath) {
+    if (FileExists $configFullPath) {
         Write-Host "    ✓ 保留配置文件: $configFullPath" -ForegroundColor Green
     }
     
@@ -300,8 +312,8 @@ function Show-AvailableFonts {
     
     foreach ($name in $fontConfigs.Keys | Sort-Object) {
         $fontCfg = $fontConfigs[$name]
-        $charExists = if (Test-Path $fontCfg.CharInfoFile) { "✓" } else { "✗" }
-        $cfgExists = if (Test-Path $fontCfg.ConfigFile) { "✓" } else { "✗" }
+        $charExists = if (FileExists $fontCfg.CharInfoFile) { "✓" } else { "✗" }
+        $cfgExists = if (FileExists $fontCfg.ConfigFile) { "✓" } else { "✗" }
         Write-Host ("{0,-15} {1,-30} {2,-20} {3}" -f $name, $fontCfg.Description, $charExists, $cfgExists)
     }
 }
@@ -371,7 +383,7 @@ function Main {
     # 构建 XnaFontRebuilder
     if ($Rebuild) {
         Write-Host "`n[强制重新构建]" -ForegroundColor Yellow
-        if (Test-Path $XnaFontRebuilder) {
+        if (FileExists $XnaFontRebuilder) {
             Remove-Item $XnaFontRebuilder -Force
         }
     }
@@ -400,18 +412,25 @@ function Main {
         Write-Host "`n🎯 目标: 生成所有字体 ($($fontConfigs.Count) 个)" -ForegroundColor Cyan
     }
 
-    # ─── 统一检索现有配置文件状态 ───
+    # ─── 统一检索现有配置文件状态（带调试信息） ───
     Write-Host "`n[检索现有配置文件状态]" -ForegroundColor Cyan
+    Write-Host "  当前工作目录: $(Get-Location)" -ForegroundColor Gray
     $configStatus = @{}
     $missingCount = 0
     foreach ($name in $fontsToGenerate.Keys | Sort-Object) {
-        # ★ 使用规范化路径（不含 ./）
         $cfgPath = $fontsToGenerate[$name].ConfigFile
-        $exists = Test-Path $cfgPath
-        $configStatus[$name] = $exists
+        $fullPath = Get-FullPath $cfgPath
+        $exists = FileExists $cfgPath
+        $existsTestPath = Test-Path $cfgPath
+        Write-Host "  检查 $name :" -ForegroundColor Gray
+        Write-Host "    相对路径: $cfgPath" -ForegroundColor Gray
+        Write-Host "    绝对路径: $fullPath" -ForegroundColor Gray
+        Write-Host "    Test-Path 结果: $existsTestPath" -ForegroundColor Gray
+        Write-Host "    FileExists 结果: $exists" -ForegroundColor Gray
         $statusText = if ($exists) { "存在" } else { "缺失" }
         $color = if ($exists) { "Green" } else { "Yellow" }
-        Write-Host "  $name : $statusText" -ForegroundColor $color
+        Write-Host "  总结: $name : $statusText" -ForegroundColor $color
+        $configStatus[$name] = $exists
         if (-not $exists) { $missingCount++ }
     }
     if ($missingCount -gt 0) {
