@@ -394,6 +394,26 @@ function Main {
         $fontsToGenerate = $fontConfigs
         Write-Host "`n🎯 目标: 生成所有字体 ($($fontConfigs.Count) 个)" -ForegroundColor Cyan
     }
+
+    # ─── 统一检索现有配置文件状态（新增） ───
+    Write-Host "`n[检索现有配置文件状态]" -ForegroundColor Cyan
+    $configStatus = @{}
+    $missingCount = 0
+    foreach ($name in $fontsToGenerate.Keys | Sort-Object) {
+        $cfgPath = Join-Path $ScriptDir $fontsToGenerate[$name].ConfigFile
+        $exists = Test-Path $cfgPath
+        $configStatus[$name] = $exists
+        $statusText = if ($exists) { "存在" } else { "缺失" }
+        $color = if ($exists) { "Green" } else { "Yellow" }
+        Write-Host "  $name : $statusText" -ForegroundColor $color
+        if (-not $exists) { $missingCount++ }
+    }
+    if ($missingCount -gt 0) {
+        Write-Host "  提示：共 $missingCount 个配置文件缺失，将在生成时自动创建。" -ForegroundColor Yellow
+    } else {
+        Write-Host "  所有配置文件均已存在，将直接使用。" -ForegroundColor Green
+    }
+    Write-Host ""  # 空行，使输出更清晰
     
     # 执行生成
     $successList = @()
