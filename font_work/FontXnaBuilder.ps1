@@ -191,18 +191,19 @@ function Generate-Font {
     $startTime = Get-Date
     
     # 步骤0: 检查配置文件是否已存在
-    $configFullPath = Join-Path $ScriptDir $FontConfig.ConfigFile
+    # ★修正：直接使用相对路径（当前目录已是 $ScriptDir）
+    $configFullPath = $FontConfig.ConfigFile
     if (Test-Path $configFullPath) {
-        Write-Host "  [0/3] 使用现有配置文件: $($FontConfig.ConfigFile)" -ForegroundColor Yellow
+        Write-Host "  [0/3] 使用现有配置文件: $configFullPath" -ForegroundColor Yellow
     } else {
         Write-Host "  [0/3] 生成配置文件..." -ForegroundColor Yellow
         if (-not (Generate-ConfigFile -FontName $FontName -FontConfig $FontConfig)) {
             return $false
         }
         # 重新获取路径（可能已生成）
-        $configFullPath = Join-Path $ScriptDir $FontConfig.ConfigFile
+        $configFullPath = $FontConfig.ConfigFile
         if (-not (Test-Path $configFullPath)) {
-            Write-Host "  ✗ 配置文件生成失败: $($FontConfig.ConfigFile)" -ForegroundColor Red
+            Write-Host "  ✗ 配置文件生成失败: $configFullPath" -ForegroundColor Red
             return $false
         }
     }
@@ -219,6 +220,7 @@ function Generate-Font {
     # 步骤1: 生成 BMFont
     Write-Host "  [1/3] 生成 BMFont 文件..." -ForegroundColor Yellow
     try {
+        # ★修正：Resolve-Path 能正确解析相对路径
         $configAbs = Resolve-Path $configFullPath
         $fontAbs = Join-Path $PWD $fontPath
         
@@ -277,7 +279,7 @@ function Generate-Font {
     
     # 保留临时配置文件
     if (Test-Path $configFullPath) {
-        Write-Host "    ✓ 保留配置文件: $($FontConfig.ConfigFile)" -ForegroundColor Green
+        Write-Host "    ✓ 保留配置文件: $configFullPath" -ForegroundColor Green
     }
     
     $endTime = Get-Date
@@ -395,12 +397,13 @@ function Main {
         Write-Host "`n🎯 目标: 生成所有字体 ($($fontConfigs.Count) 个)" -ForegroundColor Cyan
     }
 
-    # ─── 统一检索现有配置文件状态（新增） ───
+    # ─── 统一检索现有配置文件状态 ───
     Write-Host "`n[检索现有配置文件状态]" -ForegroundColor Cyan
     $configStatus = @{}
     $missingCount = 0
     foreach ($name in $fontsToGenerate.Keys | Sort-Object) {
-        $cfgPath = Join-Path $ScriptDir $fontsToGenerate[$name].ConfigFile
+        # ★修正：直接使用相对路径
+        $cfgPath = $fontsToGenerate[$name].ConfigFile
         $exists = Test-Path $cfgPath
         $configStatus[$name] = $exists
         $statusText = if ($exists) { "存在" } else { "缺失" }
