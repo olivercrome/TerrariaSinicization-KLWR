@@ -6,89 +6,106 @@ from datetime import datetime
 # ==========================================
 #              【可修改参数】
 # ==========================================
-CHAR_COUNT = 15000             # 需要的汉字数量（可从 7000~21000 调整）
+CHAR_LIMIT = 13000                    # 总字符数上限
+BASE_CHARSET = "7000汉字 符号 英文字符集.txt"  # 你自己的基础字库
 TARGET_DIR = "./"
 BMFC_FILES = [
     "Death_Text_fabu.bmfc",
-    "Death_Text_ziyong.bmfc",
-    "Mouse_Text_fabu.bmfc",
-    "Mouse_Text_ziyong.bmfc"
+    "Mouse_Text_fabu.bmfc"
 ]
-CHARS_SOURCE = "chars_for_bmfc.txt"   # 中间产物，名字不用改
+CHARS_SOURCE = "chars_for_bmfc.txt"
 # ==========================================
 
-# ---------- 符号范围 ----------
+# 自动符号范围（保证所有常用符号、字母、假名等不会漏）
 symbol_ranges = [
-    # 数字和常用标点
-    (0x0030, 0x0039),   # 0-9
-    (0x0020, 0x002F),   # 空格 ! " # $ % & ' ( ) * + , - . /
-    (0x003A, 0x0040),   # : ; < = > ? @
-    (0x005B, 0x0060),   # [ \ ] ^ _ `
-    (0x007B, 0x007E),   # { | } ~
-    # 英文大写和小写
-    (0x0041, 0x005A),   # A-Z
-    (0x0061, 0x007A),   # a-z
-    # 拉丁扩展、数学符号
-    (0x00A1, 0x00BF),   # ¡ ¢ £ ¤ ¥ ¦ § ¨ © ª « ¬ ­ ® ¯ ° ± ² ³ ´ µ ¶ · ¸ ¹ º » ¼ ½ ¾ ¿
-    (0x00D7, 0x00D7),   # ×
-    (0x00F7, 0x00F7),   # ÷
-    (0x002B, 0x002B),   # +
-    (0x002D, 0x002D),   # -
-    (0x003C, 0x003E),   # < = >
-    (0x00B1, 0x00B3),   # ± ² ³
-    (0x00B9, 0x00B9),   # ¹
-    (0x00BC, 0x00BE),   # ¼ ½ ¾
-    # 希腊字母
-    (0x0391, 0x03A9),   # Α-Ω
-    (0x03B1, 0x03C9),   # α-ω
-    # 俄文
-    (0x0410, 0x044F),   # А-я
-    # 通用标点
-    (0x2000, 0x206F),
-    # 箭头
-    (0x2190, 0x21FF),   # ←-⇿
-    # 离散数学符号
-    (0x2202, 0x2202),   # ∂
-    (0x2207, 0x2207),   # ∇
-    (0x221A, 0x221A),   # √
-    (0x221E, 0x221E),   # ∞
-    (0x2229, 0x2229),   # ∩
-    (0x2248, 0x2248),   # ≈
-    (0x2260, 0x2260),   # ≠
-    (0x2264, 0x2265),   # ≤ ≥
-    # 中文标点
-    (0x3000, 0x303F),
-    # 平假名
-    (0x3041, 0x3096), (0x3099, 0x309E),
-    # 片假名
-    (0x30A1, 0x30FA), (0x30FC, 0x30FE),
-    # 全角标点
-    (0xFF01, 0xFF0F), (0xFF1A, 0xFF20),
-    (0xFF3B, 0xFF40), (0xFF5B, 0xFF5E),
-    (0xFFE0, 0xFFE5),
+    (0x0020, 0x002F),    # 空格 ! " # $ % & ' ( ) * + , - . /
+    (0x0030, 0x0039),    # 0-9
+    (0x003A, 0x0040),    # : ; < = > ? @
+    (0x0041, 0x005A),    # A-Z
+    (0x005B, 0x0060),    # [ \ ] ^ _ `
+    (0x0061, 0x007A),    # a-z
+    (0x007B, 0x007E),    # { | } ~
+    (0x00A1, 0x00BF),    # 拉丁扩展符号
+    (0x00D7, 0x00D7),    # ×
+    (0x00F7, 0x00F7),    # ÷
+    (0x002B, 0x002B),    # +
+    (0x002D, 0x002D),    # -
+    (0x003C, 0x003E),    # < = >
+    (0x00B1, 0x00B3),    # ± ² ³
+    (0x00B9, 0x00B9),    # ¹
+    (0x00BC, 0x00BE),    # ¼ ½ ¾
+    (0x0391, 0x03A9),    # 希腊大写
+    (0x03B1, 0x03C9),    # 希腊小写
+    (0x0410, 0x044F),    # 俄文大小写
+    (0x2000, 0x206F),    # 通用标点
+    (0x2190, 0x21FF),    # 箭头
+    (0x2202, 0x2202),    # ∂
+    (0x2207, 0x2207),    # ∇
+    (0x221A, 0x221A),    # √
+    (0x221E, 0x221E),    # ∞
+    (0x2229, 0x2229),    # ∩
+    (0x2248, 0x2248),    # ≈
+    (0x2260, 0x2260),    # ≠
+    (0x2264, 0x2265),    # ≤ ≥
+    (0x3000, 0x303F),    # 中文标点
+    (0x3041, 0x3096),    # 平假名
+    (0x3099, 0x309E),    # 平假名补充
+    (0x30A1, 0x30FA),    # 片假名
+    (0x30FC, 0x30FE),    # 片假名补充
+    (0xFF01, 0xFF0F),    # 全角标点
+    (0xFF1A, 0xFF20),
+    (0xFF3B, 0xFF40),
+    (0xFF5B, 0xFF5E),
+    (0xFFE0, 0xFFE5),    # 全角货币
 ]
 
-# ---------- 生成字表和 chars 配置 ----------
-def generate_charset_and_config():
-    CJK_START = 0x4E00
-    CJK_END = min(CJK_START + CHAR_COUNT - 1, 0x9FFF)
+def load_base_charset():
+    """读取你自己的基础字库文件"""
+    chars = set()
+    if os.path.exists(BASE_CHARSET):
+        with open(BASE_CHARSET, 'r', encoding='utf-8') as f:
+            text = f.read()
+            for ch in text:
+                if ch not in ('\n', '\r', ' ', '\t'):
+                    chars.add(ch)
+        print(f"✅ 加载基础字库：{len(chars)} 个字符")
+    else:
+        print(f"⚠️  未找到 {BASE_CHARSET}，将仅使用自动符号和汉字填充。")
+    return chars
 
-    # 收集所有字符（去重）
+def generate_charset_and_config():
     charset = set()
+
+    # 1. 加入所有自动符号
     for start, end in symbol_ranges:
         for cp in range(start, end+1):
             charset.add(chr(cp))
-    for cp in range(CJK_START, CJK_END+1):
-        charset.add(chr(cp))
+    print(f"✅ 自动符号加入完成，当前字符数：{len(charset)}")
 
+    # 2. 加入你自己的基础字库（去重）
+    base = load_base_charset()
+    charset.update(base)
+    print(f"✅ 合并基础字库后，当前字符数：{len(charset)}")
+
+    # 3. 如果还没到上限，从 CJK 基本区按顺序补汉字
+    CJK_START = 0x4E00
+    cp = CJK_START
+    while len(charset) < CHAR_LIMIT and cp <= 0x9FFF:
+        ch = chr(cp)
+        if ch not in charset:
+            charset.add(ch)
+        cp += 1
+
+    total = len(charset)
+    print(f"✅ 最终字库：{total} 个字符（上限 {CHAR_LIMIT}）")
+
+    # 4. 按码点排序并写入 full_charset.txt
     sorted_chars = sorted(charset, key=lambda c: ord(c))
-
-    # 写入 full_charset.txt
     with open("full_charset.txt", 'w', encoding='utf-8') as f:
         for ch in sorted_chars:
             f.write(ch + '\n')
 
-    # 转为码点并合并区间
+    # 5. 生成 chars= 配置
     codes = [ord(c) for c in sorted_chars]
     ranges = []
     start = end = codes[0]
@@ -100,18 +117,14 @@ def generate_charset_and_config():
             start = end = c
     ranges.append(str(start) if start == end else f"{start}-{end}")
 
-    # 每行最多 50 个区间
     chunks = [ranges[i:i+50] for i in range(0, len(ranges), 50)]
     chars_lines = "\n".join(["chars=" + ",".join(chunk) for chunk in chunks])
 
     with open(CHARS_SOURCE, 'w', encoding='utf-8') as out:
         out.write(chars_lines + '\n')
 
-    total = len(codes)
-    print(f"✅ 字表生成完成：{total} 个字符（含 {CHAR_COUNT} 个汉字）")
     return total
 
-# ---------- 备份并更新 bmfc ----------
 def backup_and_update_bmfc():
     if not os.path.exists(CHARS_SOURCE):
         print(f"❌ 未找到 {CHARS_SOURCE}，请先生成字表。")
@@ -132,11 +145,9 @@ def backup_and_update_bmfc():
             continue
 
         try:
-            # 1. 备份（.bak 文件）
             bak_path = filepath + ".bak"
             shutil.copy2(filepath, bak_path)
 
-            # 2. 读取并删除原有 chars= 行
             with open(filepath, 'r', encoding='utf-8') as f:
                 lines = f.readlines()
             new_lines = [line for line in lines if not line.startswith("chars=")]
@@ -144,7 +155,6 @@ def backup_and_update_bmfc():
                 new_lines[-1] += '\n'
             new_lines.append(chars_content)
 
-            # 3. 写回
             with open(filepath, 'w', encoding='utf-8') as f:
                 f.writelines(new_lines)
 
@@ -154,7 +164,6 @@ def backup_and_update_bmfc():
             reports.append(f"❌ {filename}：修改失败 - {e}")
             fail += 1
 
-    # 打印报告
     now = datetime.now()
     print("\n" + "=" * 55)
     print(f"  BMFC 批量更新报告")
@@ -166,8 +175,7 @@ def backup_and_update_bmfc():
 
     return success, fail
 
-# ---------- 主流程 ----------
 if __name__ == "__main__":
-    print(f"▶ 当前汉字数量设定：{CHAR_COUNT}")
+    print(f"▶ 总字符数上限：{CHAR_LIMIT}")
     generate_charset_and_config()
     backup_and_update_bmfc()
