@@ -2,10 +2,10 @@
 fileVersion=1
 
 # font settings
-fontName=文渊圆体
-fontFile=WenYuanRoundedSC-Bold.ttf
+fontName=典迹悦动
+fontFile=MonuYueDong-Bd1.5.ttf
 charSet=0
-fontSize=55
+fontSize=25
 aa=4
 scaleH=100
 useSmoothing=1

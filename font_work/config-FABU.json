@@ -31,7 +31,7 @@
       "txtFile": "Combat_Text.txt",
       "description": "战斗文字字体",
       "charInfoFile": "./FontInfo/Combat_Text.txt",
-      "sourceFont": "./MonuYueDong-Bd1.5.ttf"
+      "sourceFont": "./langkejianghulianmeng.ttf"
     },
     "Death_Text": {
       "configFile": "./Death_Text_fabu.bmfc",

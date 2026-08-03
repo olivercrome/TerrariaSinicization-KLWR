@@ -7,17 +7,25 @@ from datetime import datetime
 # ==========================================
 #              【默认参数（可被交互覆盖）】
 # ==========================================
-DEFAULT_CHAR_LIMIT = 8000            # 默认总字符数上限
-BASE_CHARSET = "7000汉字 符号 英文字符集.txt"  # 你自己的基础字库
+DEFAULT_CHAR_LIMIT_FABU = 8000      # fabu 默认总字符数上限
+DEFAULT_CHAR_LIMIT_ZIYONG = 13000    # ziyong 默认总字符数上限
+BASE_CHARSET = "7000汉字 符号 英文字符集.txt"
 TARGET_DIR = "./"
-BMFC_FILES = [
+CHARS_SOURCE_FABU = "chars_for_bmfc_fabu.txt"
+CHARS_SOURCE_ZIYONG = "chars_for_bmfc_ziyong.txt"
+
+# 两个分组各自的 .bmfc 文件
+BMFC_FILES_FABU = [
     "Death_Text_fabu.bmfc",
     "Mouse_Text_fabu.bmfc"
 ]
-CHARS_SOURCE = "chars_for_bmfc.txt"
+BMFC_FILES_ZIYONG = [
+    "Death_Text_ziyong.bmfc",
+    "Mouse_Text_ziyong.bmfc"
+]
 # ==========================================
 
-# 自动符号范围（保证所有常用符号、字母、假名等）
+# 自动符号范围（同之前，无变化）
 symbol_ranges = [
     (0x0020, 0x002F),    # 空格 ! " # $ % & ' ( ) * + , - . /
     (0x0030, 0x0039),    # 0-9
@@ -50,18 +58,18 @@ symbol_ranges = [
     (0x2264, 0x2265),    # ≤ ≥
     (0x3000, 0x303F),    # 中文标点
     (0x3041, 0x3096),    # 平假名
-    (0x3099, 0x309E),    # 平假名补充
+    (0x3099, 0x309E),
     (0x30A1, 0x30FA),    # 片假名
-    (0x30FC, 0x30FE),    # 片假名补充
+    (0x30FC, 0x30FE),
     (0xFF01, 0xFF0F),    # 全角标点
     (0xFF1A, 0xFF20),
     (0xFF3B, 0xFF40),
     (0xFF5B, 0xFF5E),
-    (0xFFE0, 0xFFE5),    # 全角货币
+    (0xFFE0, 0xFFE5),
 ]
 
 def load_base_charset():
-    """读取基础字库文件，返回字符集合"""
+    """读取基础字库文件"""
     chars = set()
     if os.path.exists(BASE_CHARSET):
         with open(BASE_CHARSET, 'r', encoding='utf-8') as f:
@@ -84,7 +92,7 @@ def calculate_min_limit():
     charset.update(base)
     return len(charset)
 
-def generate_charset_and_config(char_limit):
+def generate_charset_and_config(char_limit, output_file):
     """根据指定的上限生成字表和 BMFont 配置"""
     charset = set()
 
@@ -92,14 +100,12 @@ def generate_charset_and_config(char_limit):
     for start, end in symbol_ranges:
         for cp in range(start, end+1):
             charset.add(chr(cp))
-    print(f"✅ 自动符号加入完成，当前字符数：{len(charset)}")
 
     # 2. 加入基础字库
     base = load_base_charset()
     charset.update(base)
-    print(f"✅ 合并基础字库后，当前字符数：{len(charset)}")
 
-    # 3. 如果还没到上限，从 CJK 基本区补汉字
+    # 3. 从 CJK 基本区补汉字
     CJK_START = 0x4E00
     cp = CJK_START
     while len(charset) < char_limit and cp <= 0x9FFF:
@@ -109,9 +115,9 @@ def generate_charset_and_config(char_limit):
         cp += 1
 
     total = len(charset)
-    print(f"✅ 最终字库：{total} 个字符（上限 {char_limit}）")
+    print(f"   ✅ 最终字库：{total} 个字符（上限 {char_limit}）")
 
-    # 4. 写入 full_charset.txt
+    # 4. 写入 full_charset.txt（这里覆盖写，但两组用的是同一份，后生成的会覆盖前一个，实际影响不大）
     sorted_chars = sorted(charset, key=lambda c: ord(c))
     with open("full_charset.txt", 'w', encoding='utf-8') as f:
         for ch in sorted_chars:
@@ -132,27 +138,28 @@ def generate_charset_and_config(char_limit):
     chunks = [ranges[i:i+50] for i in range(0, len(ranges), 50)]
     chars_lines = "\n".join(["chars=" + ",".join(chunk) for chunk in chunks])
 
-    with open(CHARS_SOURCE, 'w', encoding='utf-8') as out:
+    with open(output_file, 'w', encoding='utf-8') as out:
         out.write(chars_lines + '\n')
 
     return total
 
-def backup_and_update_bmfc():
-    if not os.path.exists(CHARS_SOURCE):
-        print(f"❌ 未找到 {CHARS_SOURCE}，请先生成字表。")
+def backup_and_update_bmfc(chars_source, bmfc_files, label):
+    """根据 chars 源文件更新指定的 bmfc 文件列表"""
+    if not os.path.exists(chars_source):
+        print(f"❌ 未找到 {chars_source}，跳过 {label} 更新。")
         return 0, 0
 
-    with open(CHARS_SOURCE, 'r', encoding='utf-8') as f:
+    with open(chars_source, 'r', encoding='utf-8') as f:
         chars_content = f.read()
 
     success = 0
     fail = 0
     reports = []
 
-    for filename in BMFC_FILES:
+    for filename in bmfc_files:
         filepath = os.path.join(TARGET_DIR, filename)
         if not os.path.exists(filepath):
-            reports.append(f"⚠️  {filename}：文件不存在，跳过")
+            reports.append(f"   ⚠️  {filename}：文件不存在，跳过")
             fail += 1
             continue
 
@@ -170,18 +177,18 @@ def backup_and_update_bmfc():
             with open(filepath, 'w', encoding='utf-8') as f:
                 f.writelines(new_lines)
 
-            reports.append(f"✅ {filename}：修改成功（备份 {filename}.bak）")
+            reports.append(f"   ✅ {filename}：修改成功（备份 {filename}.bak）")
             success += 1
         except Exception as e:
-            reports.append(f"❌ {filename}：修改失败 - {e}")
+            reports.append(f"   ❌ {filename}：修改失败 - {e}")
             fail += 1
 
     now = datetime.now()
-    print("\n" + "=" * 55)
-    print(f"  BMFC 批量更新报告")
+    print(f"\n{'='*55}")
+    print(f"  BMFC 批量更新报告 [{label}]")
     print(f"  日期：{now.strftime('%Y-%m-%d')}  时间：{now.strftime('%H:%M:%S')}")
     print(f"  成功：{success}  失败：{fail}")
-    print("=" * 55)
+    print(f"{'='*55}")
     for r in reports:
         print(r)
 
@@ -192,27 +199,49 @@ if __name__ == "__main__":
     print("正在计算最小字符数...")
     min_limit = calculate_min_limit()
     print(f"📏 自动计算的下限（符号+基础字库）: {min_limit}")
-    print(f"📏 默认上限: {DEFAULT_CHAR_LIMIT}")
+    print(f"📏 fabu 默认上限: {DEFAULT_CHAR_LIMIT_FABU}")
+    print(f"📏 ziyong 默认上限: {DEFAULT_CHAR_LIMIT_ZIYONG}\n")
 
-    # 2. 交互询问
-    user_input = input(f"请输入字数上限（≥{min_limit}），直接回车使用默认 {DEFAULT_CHAR_LIMIT}，否则退出: ").strip()
-
+    # 2. 交互询问 fabu
+    user_input = input(f"请输入 fabu 字数上限（≥{min_limit}），直接回车使用默认 {DEFAULT_CHAR_LIMIT_FABU}，输入其他内容则退出: ").strip()
     if user_input == "":
-        char_limit = DEFAULT_CHAR_LIMIT
-        print(f"✅ 使用默认上限: {char_limit}")
+        char_limit_fabu = DEFAULT_CHAR_LIMIT_FABU
+        print(f"✅ fabu 使用默认上限: {char_limit_fabu}")
     else:
         try:
-            char_limit = int(user_input)
+            char_limit_fabu = int(user_input)
         except ValueError:
             print(f"❌ 输入无效，必须是数字。流程终止。")
             sys.exit(1)
-        if char_limit < min_limit:
-            print(f"❌ 输入值 {char_limit} 小于下限 {min_limit}，无法生成。流程终止。")
+        if char_limit_fabu < min_limit:
+            print(f"❌ 输入值 {char_limit_fabu} 小于下限 {min_limit}，无法生成。流程终止。")
             sys.exit(1)
         else:
-            print(f"✅ 使用自定上限: {char_limit}")
+            print(f"✅ fabu 使用自定上限: {char_limit_fabu}")
 
-    # 3. 开始生成和更新
-    print(f"\n▶ 开始生成字表，上限 {char_limit} ...")
-    generate_charset_and_config(char_limit)
-    backup_and_update_bmfc()
+    # 3. 交互询问 ziyong
+    user_input = input(f"请输入 ziyong 字数上限（≥{min_limit}），直接回车使用默认 {DEFAULT_CHAR_LIMIT_ZIYONG}，输入其他内容则退出: ").strip()
+    if user_input == "":
+        char_limit_ziyong = DEFAULT_CHAR_LIMIT_ZIYONG
+        print(f"✅ ziyong 使用默认上限: {char_limit_ziyong}")
+    else:
+        try:
+            char_limit_ziyong = int(user_input)
+        except ValueError:
+            print(f"❌ 输入无效，必须是数字。流程终止。")
+            sys.exit(1)
+        if char_limit_ziyong < min_limit:
+            print(f"❌ 输入值 {char_limit_ziyong} 小于下限 {min_limit}，无法生成。流程终止。")
+            sys.exit(1)
+        else:
+            print(f"✅ ziyong 使用自定上限: {char_limit_ziyong}")
+
+    # 4. 生成 fabu 字表并更新
+    print(f"\n▶ [fabu] 开始生成字表，上限 {char_limit_fabu} ...")
+    generate_charset_and_config(char_limit_fabu, CHARS_SOURCE_FABU)
+    backup_and_update_bmfc(CHARS_SOURCE_FABU, BMFC_FILES_FABU, "fabu")
+
+    # 5. 生成 ziyong 字表并更新
+    print(f"\n▶ [ziyong] 开始生成字表，上限 {char_limit_ziyong} ...")
+    generate_charset_and_config(char_limit_ziyong, CHARS_SOURCE_ZIYONG)
+    backup_and_update_bmfc(CHARS_SOURCE_ZIYONG, BMFC_FILES_ZIYONG, "ziyong")
