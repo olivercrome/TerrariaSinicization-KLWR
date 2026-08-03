@@ -23,7 +23,6 @@ public class UnpackBundle
     public List<Tuple<AssetsFileInstance, byte[]>> ChangedAssetsDatas { get; set; }
 
     public const string ImportDir = "import";
-
     public const string ExportDir = "export";
 
     public UnpackBundle()
@@ -33,14 +32,11 @@ public class UnpackBundle
         LoadAssets = [];
         ChangedAssetsDatas = new();
         if (!Directory.Exists(ImportDir))
-        {
             Directory.CreateDirectory(ImportDir);
-        }
         if (!Directory.Exists(ExportDir))
-        {
             Directory.CreateDirectory(ExportDir);
-        }
     }
+
     public void OpenFiles(string file)
     {
         string classDataPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "classdata.tpk");
@@ -49,7 +45,6 @@ public class UnpackBundle
         if (fileType == DetectedFileType.BundleFile)
         {
             BundleFileInstance bundleInst = am.LoadBundleFile(file, false);
-
             if (bundleInst.file.BlockAndDirInfo.BlockInfos.Any(inf => inf.GetCompressionType() != 0))
             {
                 DecompressToMemory(bundleInst);
@@ -59,7 +54,6 @@ public class UnpackBundle
             {
                 LoadBundle(bundleInst);
             }
-
         }
         else
         {
@@ -70,18 +64,13 @@ public class UnpackBundle
     private void DecompressToMemory(BundleFileInstance bundleInst)
     {
         AssetBundleFile bundle = bundleInst.file;
-
         MemoryStream bundleStream = new MemoryStream();
         bundle.Unpack(new AssetsFileWriter(bundleStream));
-
         bundleStream.Position = 0;
-
         byte[] bundleBytes = bundleStream.ToArray();
         MemoryStream newBundleStream = new MemoryStream(bundleBytes);
-
         AssetBundleFile newBundle = new AssetBundleFile();
         newBundle.Read(new AssetsFileReader(newBundleStream));
-
         bundle.Close();
         bundleInst.file = newBundle;
     }
@@ -92,14 +81,10 @@ public class UnpackBundle
         foreach (var file in Workspace.Files)
         {
             string name = file.Name;
-
             AssetBundleFile bundleFile = BundleInst.file;
-
             Stream assetStream = file.Stream;
-
             DetectedFileType fileType = Utility.DetectFileType(new AssetsFileReader(assetStream), 0);
             assetStream.Position = 0;
-
             if (fileType == DetectedFileType.AssetsFile)
             {
                 string assetMemPath = Path.Combine(BundleInst.path, name);
@@ -109,37 +94,31 @@ public class UnpackBundle
                 if (BundleInst != null && fileInst.parentBundle == null)
                     fileInst.parentBundle = BundleInst;
                 AssetWorkspace.LoadAssetsFile(fileInst, true);
-
             }
         }
         SetupContainers(AssetWorkspace);
         AssetWorkspace.GenerateAssetsFileLookup();
         foreach (var asset in AssetWorkspace.LoadedAssets)
         {
-
             AssetContainer cont = asset.Value;
             AssetNameUtils.GetDisplayNameFast(AssetWorkspace, cont, true, out string assetName, out string typeName);
             assetName = Utility.ReplaceInvalidPathChars(assetName);
             var assetPath = $"{assetName}-{Path.GetFileName(cont.FileInstance.path)}-{cont.PathId}";
             LoadAssets.Add(assetPath, cont);
         }
-
     }
 
     public void BatchImport()
     {
         var dir = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, ImportDir);
-
         var files = Directory.GetFiles(dir);
         foreach (var file in files)
         {
             string fileName = Path.GetFileNameWithoutExtension(file);
             string extension = Path.GetExtension(file).ToLower();
-            
             if (LoadAssets.TryGetValue(fileName, out AssetContainer? cont) && cont != null)
             {
                 AssetTypeValueField baseField = AssetWorkspace.GetBaseField(cont)!;
-                
                 if (cont.ClassId == 28 && extension == ".png")
                 {
                     ImportTexture2D(baseField, file, cont);
@@ -148,9 +127,7 @@ public class UnpackBundle
                 {
                     byte[] byteData = File.ReadAllBytes(file);
                     baseField["m_Script"].AsByteArray = byteData;
-
                     byte[] savedAsset = baseField.WriteToByteArray();
-
                     var replacer = new AssetsReplacerFromMemory(
                         cont.PathId, cont.ClassId, cont.MonoId, savedAsset);
                     AssetWorkspace.AddReplacer(cont.FileInstance, replacer, new MemoryStream(savedAsset));
@@ -164,15 +141,12 @@ public class UnpackBundle
         try
         {
             TextureFormat fmt = (TextureFormat)baseField["m_TextureFormat"].AsInt;
-            
             byte[] platformBlob = TextureHelper.GetPlatformBlob(baseField);
             uint platform = cont.FileInstance.file.Metadata.TargetPlatform;
-
             int mips = baseField["m_MipCount"].AsInt;
             if (mips < 1) mips = 1;
 
             byte[] encImageBytes = TextureImportExport.Import(filePath, fmt, out int width, out int height, ref mips, platform, platformBlob);
-
             if (encImageBytes == null)
             {
                 Console.WriteLine($"导入纹理失败 {Path.GetFileName(filePath)}: 无法编码纹理格式 {fmt}");
@@ -250,12 +224,10 @@ public class UnpackBundle
                 }
 
                 string file = Path.Combine(dir, $"{fileName}{extension}");
-
                 File.WriteAllBytes(file, byteData);
                 textAssetCount++;
             }
         }
-        
         Console.WriteLine($"导出统计: {textAssetCount} 个文本资源, {textureCount} 个纹理资源");
     }
 
@@ -264,35 +236,29 @@ public class UnpackBundle
         try
         {
             TextureFile texFile = TextureFile.ReadTextureFile(baseField);
-
             if (texFile.m_Width == 0 && texFile.m_Height == 0)
             {
                 Console.WriteLine($"警告: 纹理尺寸为 0x0: {name}");
                 return;
             }
-
             if (!TextureHelper.GetResSTexture(texFile, cont.FileInstance))
             {
                 string resSName = Path.GetFileName(texFile.m_StreamData.path);
                 Console.WriteLine($"警告: resS 文件未找到: {resSName}");
                 return;
             }
-
             byte[] data = TextureHelper.GetRawTextureBytes(texFile, cont.FileInstance);
-
             if (data == null)
             {
                 string resSName = Path.GetFileName(texFile.m_StreamData.path);
                 Console.WriteLine($"警告: resS 文件在磁盘上未找到: {resSName}");
                 return;
             }
-
             byte[] platformBlob = TextureHelper.GetPlatformBlob(baseField);
             uint platform = cont.FileInstance.file.Metadata.TargetPlatform;
 
             string file = Path.Combine(dir, $"{fileName}.png");
             bool success = TextureImportExport.Export(data, file, texFile.m_Width, texFile.m_Height, (TextureFormat)texFile.m_TextureFormat, platform, platformBlob);
-            
             if (success)
             {
                 Console.WriteLine($"导出纹理: {name} -> {fileName}.png ({texFile.m_Width}x{texFile.m_Height})");
@@ -319,16 +285,13 @@ public class UnpackBundle
     public void SaveAndCompressBundle(string path, AssetBundleCompressionType type)
     {
         SaveToMemory();
-        
         List<BundleReplacer> replacers = Workspace.GetReplacers();
         using MemoryStream ms = new MemoryStream();
         using AssetsFileWriter w = new AssetsFileWriter(ms);
         BundleInst.file.Write(w, replacers.ToList());
-        
         ms.Position = 0;
         AssetBundleFile modifiedBundle = new AssetBundleFile();
         modifiedBundle.Read(new AssetsFileReader(ms));
-        
         using FileStream fs = File.Open(path, FileMode.Create);
         using AssetsFileWriter fw = new AssetsFileWriter(fs);
         modifiedBundle.Pack(modifiedBundle.Reader, fw, type, false);
@@ -348,7 +311,6 @@ public class UnpackBundle
             {
                 if (!fileToReplacer.ContainsKey(file))
                     fileToReplacer[file] = new List<AssetsReplacer>();
-
                 fileToReplacer[file].Add(replacer);
             }
         }
@@ -380,7 +342,6 @@ public class UnpackBundle
             string assetName = Path.GetFileName(fileInstance.path);
             Workspace.AddOrReplaceFile(new MemoryStream(assetData), assetName, true);
             am.UnloadAssetsFile(fileInstance.path);
-
         }
     }
 
@@ -392,13 +353,10 @@ public class UnpackBundle
         BundleInst.file.Write(w, replacers.ToList());
     }
 
-
     private void SetupContainers(AssetWorkspace Workspace)
     {
         if (Workspace.LoadedFiles.Count == 0)
-        {
             return;
-        }
 
         UnityContainer ucont = new UnityContainer();
         foreach (AssetsFileInstance file in Workspace.LoadedFiles)
@@ -426,10 +384,189 @@ public class UnpackBundle
         }
     }
 
+    // ============================================================
+    // 自定义本地化替换（包含备份逻辑）
+    // ============================================================
     public void BatchLocalizationReplace(string localizationFolder)
     {
-        var enUsBackups = new Dictionary<string, byte[]>();
-        
+        // ------------------------------------------------------------
+        // 第1步：把原版中文（zh-Hans）备份到日语（ja-JP）
+        // ------------------------------------------------------------
+        Console.WriteLine("第1步：把原版中文 (zh-Hans) 备份到日语 (ja-JP)");
+        foreach (var (assetKey, cont) in LoadAssets)
+        {
+            var baseField = AssetWorkspace.GetBaseField(cont);
+            if (baseField == null) continue;
+
+            var mNameField = baseField["m_Name"];
+            if (mNameField == null || mNameField.IsDummy) continue;
+
+            var assetName = mNameField.AsString;
+            if (string.IsNullOrEmpty(assetName) || assetName.Contains("_comp")) continue;
+
+            if (!assetName.StartsWith("zh-Hans.") && assetName != "zh-Hans") continue;
+
+            string category;
+            if (assetName == "zh-Hans")
+                category = "Base";
+            else
+                category = assetName.Substring("zh-Hans.".Length);
+
+            string jaJpAssetName = (category == "Base") ? "ja-JP" : $"ja-JP.{category}";
+            var jaJpKey = LoadAssets.Keys.FirstOrDefault(k => k.StartsWith(jaJpAssetName));
+            if (jaJpKey == null)
+            {
+                Console.WriteLine($"  跳过 {assetName}: 未找到对应的 ja-JP 资源");
+                continue;
+            }
+
+            var jaJpCont = LoadAssets[jaJpKey];
+            var jaJpBaseField = AssetWorkspace.GetBaseField(jaJpCont);
+            if (jaJpBaseField == null) continue;
+
+            var zhScriptField = baseField["m_Script"];
+            if (zhScriptField == null || zhScriptField.IsDummy) continue;
+            byte[] zhData;
+            try { zhData = zhScriptField.AsByteArray; }
+            catch { continue; }
+            if (zhData == null) continue;
+
+            var jaScriptField = jaJpBaseField["m_Script"];
+            if (jaScriptField == null || jaScriptField.IsDummy) continue;
+            jaScriptField.AsByteArray = zhData;
+
+            byte[] savedAsset = jaJpBaseField.WriteToByteArray();
+            var replacer = new AssetsReplacerFromMemory(jaJpCont.PathId, jaJpCont.ClassId, jaJpCont.MonoId, savedAsset);
+            AssetWorkspace.AddReplacer(jaJpCont.FileInstance, replacer, new MemoryStream(savedAsset));
+            Console.WriteLine($"  ✅ {assetName} -> {jaJpAssetName}");
+        }
+
+        // ------------------------------------------------------------
+        // 第2步：把原版英文（en-US）备份到法语（fr-FR）
+        // ------------------------------------------------------------
+        Console.WriteLine("第2步：把原版英文 (en-US) 备份到法语 (fr-FR)");
+        var enUsOriginalData = new Dictionary<string, byte[]>();
+
+        foreach (var (assetKey, cont) in LoadAssets)
+        {
+            var baseField = AssetWorkspace.GetBaseField(cont);
+            if (baseField == null) continue;
+
+            var mNameField = baseField["m_Name"];
+            if (mNameField == null || mNameField.IsDummy) continue;
+
+            var assetName = mNameField.AsString;
+            if (string.IsNullOrEmpty(assetName) || assetName.Contains("_comp") || !assetName.StartsWith("en-US"))
+                continue;
+
+            var scriptField = baseField["m_Script"];
+            if (scriptField == null || scriptField.IsDummy) continue;
+            byte[] originalData;
+            try { originalData = scriptField.AsByteArray; }
+            catch { continue; }
+            if (originalData == null) continue;
+
+            enUsOriginalData[assetKey] = originalData;
+        }
+
+        // 把备份的 en-US 数据写入 fr-FR
+        foreach (var (assetKey, cont) in LoadAssets)
+        {
+            var baseField = AssetWorkspace.GetBaseField(cont);
+            if (baseField == null) continue;
+
+            var mNameField = baseField["m_Name"];
+            if (mNameField == null || mNameField.IsDummy) continue;
+
+            var assetName = mNameField.AsString;
+            if (string.IsNullOrEmpty(assetName) || assetName.Contains("_comp") || !assetName.StartsWith("fr-FR"))
+                continue;
+
+            var matchingEnUsKey = FindMatchingEnUsAsset(assetName, LoadAssets.Keys);
+            if (matchingEnUsKey != null && enUsOriginalData.TryGetValue(matchingEnUsKey, out byte[] enData))
+            {
+                var scriptField = baseField["m_Script"];
+                if (scriptField == null || scriptField.IsDummy) continue;
+                scriptField.AsByteArray = enData;
+                byte[] savedAsset = baseField.WriteToByteArray();
+                var replacer = new AssetsReplacerFromMemory(cont.PathId, cont.ClassId, cont.MonoId, savedAsset);
+                AssetWorkspace.AddReplacer(cont.FileInstance, replacer, new MemoryStream(savedAsset));
+                Console.WriteLine($"  ✅ 已把原版英文备份到 {assetName}");
+            }
+        }
+
+        // ------------------------------------------------------------
+        // 第3步：把翻译文件覆盖到英语（en-US）
+        // ------------------------------------------------------------
+        Console.WriteLine("第3步：把翻译文件覆盖到英语 (en-US)");
+        foreach (var (assetKey, cont) in LoadAssets)
+        {
+            var baseField = AssetWorkspace.GetBaseField(cont);
+            if (baseField == null) continue;
+
+            var mNameField = baseField["m_Name"];
+            if (mNameField == null || mNameField.IsDummy) continue;
+
+            var assetName = mNameField.AsString;
+            if (string.IsNullOrEmpty(assetName) || assetName.Contains("_comp") || !assetName.StartsWith("en-US"))
+                continue;
+
+            var translationFile = MatchLocalizationFile(assetName, localizationFolder);
+            if (translationFile == null)
+            {
+                Console.WriteLine($"  跳过 {assetName}: 未找到对应的 JSON 文件");
+                continue;
+            }
+
+            var scriptField = baseField["m_Script"];
+            if (scriptField == null || scriptField.IsDummy) continue;
+
+            byte[] newData = File.ReadAllBytes(translationFile);
+            scriptField.AsByteArray = newData;
+            byte[] savedAsset = baseField.WriteToByteArray();
+            var replacer = new AssetsReplacerFromMemory(cont.PathId, cont.ClassId, cont.MonoId, savedAsset);
+            AssetWorkspace.AddReplacer(cont.FileInstance, replacer, new MemoryStream(savedAsset));
+            Console.WriteLine($"  ✅ 已用 {Path.GetFileName(translationFile)} 覆盖 {assetName}");
+        }
+
+        // ------------------------------------------------------------
+        // 第4步：把翻译文件覆盖到中文（zh-Hans）
+        // ------------------------------------------------------------
+        Console.WriteLine("第4步：把翻译文件覆盖到中文 (zh-Hans)");
+        foreach (var (assetKey, cont) in LoadAssets)
+        {
+            var baseField = AssetWorkspace.GetBaseField(cont);
+            if (baseField == null) continue;
+
+            var mNameField = baseField["m_Name"];
+            if (mNameField == null || mNameField.IsDummy) continue;
+
+            var assetName = mNameField.AsString;
+            if (string.IsNullOrEmpty(assetName) || assetName.Contains("_comp") || !assetName.StartsWith("zh-Hans"))
+                continue;
+
+            var translationFile = MatchLocalizationFile(assetName, localizationFolder);
+            if (translationFile == null)
+            {
+                Console.WriteLine($"  跳过 {assetName}: 未找到对应的 JSON 文件");
+                continue;
+            }
+
+            var scriptField = baseField["m_Script"];
+            if (scriptField == null || scriptField.IsDummy) continue;
+
+            byte[] newData = File.ReadAllBytes(translationFile);
+            scriptField.AsByteArray = newData;
+            byte[] savedAsset = baseField.WriteToByteArray();
+            var replacer = new AssetsReplacerFromMemory(cont.PathId, cont.ClassId, cont.MonoId, savedAsset);
+            AssetWorkspace.AddReplacer(cont.FileInstance, replacer, new MemoryStream(savedAsset));
+            Console.WriteLine($"  ✅ 已用 {Path.GetFileName(translationFile)} 覆盖 {assetName}");
+        }
+
+        // ------------------------------------------------------------
+        // 第5步：更新所有语言的 Language 显示名
+        // ------------------------------------------------------------
+        Console.WriteLine("第5步：更新所有语言的 Language 字段");
         var languageNames = new Dictionary<string, string>
         {
             ["English"] = "悠然汉化修正V8.2.1",
@@ -446,203 +583,59 @@ public class UnpackBundle
             ["Polish"] = "本汉化基于皮皮蛙大佬汉化进行145修正",
             ["Korean"] = "玩的开心!"
         };
-        
-        
-        var langCodes = new[] { "en-US", "fr-FR", "es-ES", "de-DE", "it-IT", "ja-JP", "ko-KR", "pl-PL", "pt-BR", "ru-RU", "zh-Hans", "zh-Hant" };
 
+        var allLangCodes = new[] { "en-US", "zh-Hans", "ja-JP", "fr-FR", "es-ES", "de-DE", "it-IT", "pt-BR", "ru-RU", "pl-PL", "ko-KR", "zh-Hant" };
         foreach (var (assetKey, cont) in LoadAssets)
         {
             var baseField = AssetWorkspace.GetBaseField(cont);
             if (baseField == null) continue;
-            
+
             var mNameField = baseField["m_Name"];
             if (mNameField == null || mNameField.IsDummy) continue;
-            
+
             var assetName = mNameField.AsString;
-            if (string.IsNullOrEmpty(assetName)) continue;
-            
-            if (assetName.Contains("_comp")) continue;
-            
-            var mScriptField = baseField["m_Script"];
-            if (mScriptField == null || mScriptField.IsDummy) continue;
-            
-            byte[]? byteData = null;
-            try
-            {
-                byteData = mScriptField.AsByteArray;
-            }
-            catch
-            {
-                continue;
-            }
-            
-            if (byteData == null) { continue; }
+            if (string.IsNullOrEmpty(assetName) || assetName.Contains("_comp")) continue;
 
-            var matchedLocalizationFile = MatchLocalizationFile(assetName, localizationFolder);
-
-            if (assetName.StartsWith("en-US"))
+            if (allLangCodes.Contains(assetName))
             {
-                enUsBackups[assetKey] = byteData;
-
-                if (matchedLocalizationFile != null)
-                {
-                    byte[] newData = File.ReadAllBytes(matchedLocalizationFile);
-                    mScriptField.AsByteArray = newData;
-                    byte[] savedAsset = baseField.WriteToByteArray();
-                    var replacer = new AssetsReplacerFromMemory(cont.PathId, cont.ClassId, cont.MonoId, savedAsset);
-                    AssetWorkspace.AddReplacer(cont.FileInstance, replacer, new MemoryStream(savedAsset));
-                    Console.WriteLine($"Replaced: {assetName} with {Path.GetFileName(matchedLocalizationFile)}");
-                }
+                ModifyAllLanguagesInAsset(baseField, languageNames);
+                byte[] savedAsset = baseField.WriteToByteArray();
+                var replacer = new AssetsReplacerFromMemory(cont.PathId, cont.ClassId, cont.MonoId, savedAsset);
+                AssetWorkspace.AddReplacer(cont.FileInstance, replacer, new MemoryStream(savedAsset));
+                Console.WriteLine($"  ✅ 已更新 {assetName} 的 Language 字段");
             }
         }
 
-        foreach (var (assetKey, cont) in LoadAssets)
-        {
-            var baseField = AssetWorkspace.GetBaseField(cont);
-            if (baseField == null) continue;
-            
-            var mNameField = baseField["m_Name"];
-            if (mNameField == null || mNameField.IsDummy) continue;
-            
-            var assetName = mNameField.AsString;
-            if (string.IsNullOrEmpty(assetName) || !assetName.StartsWith("fr-FR")) { continue; }
-            
-            if (assetName.Contains("_comp")) continue;
-
-            var matchingEnUsKey = FindMatchingEnUsAsset(assetName, LoadAssets.Keys);
-
-            if (matchingEnUsKey != null && enUsBackups.TryGetValue(matchingEnUsKey, out byte[] enUsData))
-            {
-                var mScriptField = baseField["m_Script"];
-                if (mScriptField == null || mScriptField.IsDummy) continue;
-                
-                try
-                {
-                    mScriptField.AsByteArray = enUsData;
-                    ModifyLanguageInAsset(baseField);
-                    byte[] savedAsset = baseField.WriteToByteArray();
-                    var replacer = new AssetsReplacerFromMemory(cont.PathId, cont.ClassId, cont.MonoId, savedAsset);
-                    AssetWorkspace.AddReplacer(cont.FileInstance, replacer, new MemoryStream(savedAsset));
-                    Console.WriteLine($"Replaced fr-FR: {assetName} with original en-US data");
-                }
-                catch
-                {
-                    continue;
-                }
-            }
-        }
-
-        foreach (var (assetKey, cont) in LoadAssets)
-        {
-            var baseField = AssetWorkspace.GetBaseField(cont);
-            if (baseField == null) continue;
-            
-            var mNameField = baseField["m_Name"];
-            if (mNameField == null || mNameField.IsDummy) continue;
-            
-            var assetName = mNameField.AsString;
-            if (string.IsNullOrEmpty(assetName)) continue;
-            
-            if (assetName.Contains("_comp")) continue;
-            
-            var mScriptField = baseField["m_Script"];
-            if (mScriptField == null || mScriptField.IsDummy) continue;
-            
-            byte[]? byteData = null;
-            try
-            {
-                byteData = mScriptField.AsByteArray;
-            }
-            catch
-            {
-                continue;
-            }
-            
-            if (byteData == null) { continue; }
-
-            string? langCode = null;
-            foreach (var code in langCodes)
-            {
-                if (assetName.StartsWith(code))
-                {
-                    if (code == "en-US" && assetName.StartsWith("en-US."))
-                        continue;
-                    if (!code.EndsWith("-US") && assetName.StartsWith(code + "."))
-                        continue;
-                    langCode = code;
-                    break;
-                }
-            }
-
-            if (langCode != null)
-            {
-                try
-                {
-                    ModifyAllLanguagesInAsset(baseField, languageNames);
-                    byte[] savedAsset = baseField.WriteToByteArray();
-                    var replacer = new AssetsReplacerFromMemory(cont.PathId, cont.ClassId, cont.MonoId, savedAsset);
-                    AssetWorkspace.AddReplacer(cont.FileInstance, replacer, new MemoryStream(savedAsset));
-                    Console.WriteLine($"Updated language names: {assetName}");
-                }
-                catch
-                {
-                    continue;
-                }
-            }
-        }
+        Console.WriteLine("所有步骤执行完毕！");
     }
 
+    // ------------------------------------------------------------
+    // 辅助方法
+    // ------------------------------------------------------------
     private string? MatchLocalizationFile(string assetName, string localizationFolder)
     {
         if (!Directory.Exists(localizationFolder))
-        {
             return null;
+
+        var files = Directory.GetFiles(localizationFolder, "*.json");
+        string? category = null;
+
+        if (assetName.Contains('.'))
+        {
+            var parts = assetName.Split('.');
+            if (parts.Length >= 2)
+                category = parts[1];
+        }
+        else
+        {
+            category = "Base";
         }
 
-        var localizationFiles = Directory.GetFiles(localizationFolder, "*.json");
-
-        string? category = ExtractCategory(assetName);
-
-        if (category == null)
-        {
+        if (string.IsNullOrEmpty(category))
             return null;
-        }
 
         string targetFileName = category + ".json";
-
-        foreach (var file in localizationFiles)
-        {
-            if (Path.GetFileName(file).Equals(targetFileName, StringComparison.OrdinalIgnoreCase))
-            {
-                return file;
-            }
-        }
-
-        return null;
-    }
-
-    private string? ExtractCategory(string assetName)
-    {
-        if (assetName.StartsWith("en-US."))
-        {
-            var rest = assetName.Substring("en-US.".Length);
-            var dotIndex = rest.IndexOf('.');
-            if (dotIndex > 0)
-            {
-                return rest.Substring(0, dotIndex);
-            }
-            return rest;
-        }
-        else if (assetName.Equals("en-US", StringComparison.OrdinalIgnoreCase))
-        {
-            return "Base";
-        }
-        else if (assetName.StartsWith("en-US"))
-        {
-            return "Base";
-        }
-
-        return null;
+        return files.FirstOrDefault(f => Path.GetFileName(f).Equals(targetFileName, StringComparison.OrdinalIgnoreCase));
     }
 
     private string? FindMatchingEnUsAsset(string frFrAssetName, IEnumerable<string> assetKeys)
@@ -671,28 +664,6 @@ public class UnpackBundle
         }
 
         return null;
-    }
-
-    private void ModifyLanguageInAsset(AssetTypeValueField baseField)
-    {
-        try
-        {
-            var byteData = baseField["m_Script"].AsByteArray;
-            if (byteData == null) return;
-
-            string jsonContent = Encoding.UTF8.GetString(byteData);
-            var json = Newtonsoft.Json.Linq.JObject.Parse(jsonContent);
-
-            if (json["Language"] != null && json["Language"]["French"] != null)
-            {
-                json["Language"]["French"] = "English";
-                string modifiedJson = Newtonsoft.Json.JsonConvert.SerializeObject(json, Newtonsoft.Json.Formatting.Indented);
-                baseField["m_Script"].AsByteArray = Encoding.UTF8.GetBytes(modifiedJson);
-            }
-        }
-        catch
-        {
-        }
     }
 
     private void ModifyAllLanguagesInAsset(AssetTypeValueField baseField, Dictionary<string, string> languageNames)

@@ -22,6 +22,32 @@ jobs:
     - name: Checkout repository
       uses: actions/checkout@v6
     
+    # ============================================================
+    # 🔥 新增：验证所有 JSON 文件格式（失败即终止）
+    # ============================================================
+    - name: Validate JSON files
+      shell: pwsh
+      run: |
+        $jsonFiles = Get-ChildItem -Path Localization -Filter *.json
+        $hasError = $false
+        Write-Host "📁 开始验证 Localization 目录下的 JSON 文件..."
+        foreach ($file in $jsonFiles) {
+          Write-Host "  🔍 检查 $($file.Name) ..."
+          $result = python -m json.tool $file.FullName 2>&1
+          if ($LASTEXITCODE -ne 0) {
+            Write-Host "❌ 错误: $($file.Name) 格式无效！"
+            Write-Host $result
+            $hasError = $true
+          } else {
+            Write-Host "  ✅ $($file.Name) 格式正确"
+          }
+        }
+        if ($hasError) {
+          Write-Host "##[error]检测到 JSON 格式错误，构建终止！"
+          exit 1
+        }
+        Write-Host "🎉 所有 JSON 文件验证通过！"
+    
     - name: Setup .NET
       uses: actions/setup-dotnet@v5
       with:
