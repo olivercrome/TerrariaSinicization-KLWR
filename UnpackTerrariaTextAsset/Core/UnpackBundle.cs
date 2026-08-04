@@ -1,6 +1,7 @@
 using AssetsTools.NET;
 using AssetsTools.NET.Extra;
 using AssetsTools.NET.Texture;
+using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.PixelFormats;
@@ -579,7 +580,7 @@ public class UnpackBundle
         }
 
         // ------------------------------------------------------------
-        // 第6步：更新所有语言的 Language 显示名
+        // 第6步：更新所有语言的 Language 显示名（只更新已存在的键）
         // ------------------------------------------------------------
         Console.WriteLine("第6步：更新所有语言的 Language 字段");
         var languageNames = new Dictionary<string, string>
@@ -682,36 +683,30 @@ public class UnpackBundle
     }
 
     private void ModifyAllLanguagesInAsset(AssetTypeValueField baseField, Dictionary<string, string> languageNames)
-{
-    try
     {
-        var byteData = baseField["m_Script"].AsByteArray;
-        if (byteData == null) return;
-
-        string jsonContent = Encoding.UTF8.GetString(byteData);
-        var json = JObject.Parse(jsonContent);
-
-        // 确保 Language 对象存在
-        if (json["Language"] == null)
+        try
         {
-            json["Language"] = new JObject();
-        }
+            var byteData = baseField["m_Script"].AsByteArray;
+            if (byteData == null) return;
 
-        var langObj = json["Language"] as JObject;
-        foreach (var (key, value) in languageNames)
-        {
-            // 强制设置，无论原来是否存在
-            langObj![key] = value;
-        }
+            string jsonContent = Encoding.UTF8.GetString(byteData);
+            var json = JObject.Parse(jsonContent);
 
-        string modifiedJson = Newtonsoft.Json.JsonConvert.SerializeObject(json, Newtonsoft.Json.Formatting.Indented);
-        baseField["m_Script"].AsByteArray = Encoding.UTF8.GetBytes(modifiedJson);
+            if (json["Language"] != null)
+            {
+                foreach (var (key, value) in languageNames)
+                {
+                    if (json["Language"]![key] != null)
+                    {
+                        json["Language"]![key] = value;
+                    }
+                }
+                string modifiedJson = JsonConvert.SerializeObject(json, Formatting.Indented);
+                baseField["m_Script"].AsByteArray = Encoding.UTF8.GetBytes(modifiedJson);
+            }
+        }
+        catch { }
     }
-    catch (Exception ex)
-    {
-        Console.WriteLine($"更新 Language 字段失败: {ex.Message}");
-    }
-}
 
     public void DiffAndSyncLocalization(string localizationFolder)
     {
@@ -788,7 +783,7 @@ public class UnpackBundle
         try
         {
             string zhHansJson = Encoding.UTF8.GetString(zhHansData);
-            var zhHansObj = Newtonsoft.Json.Linq.JObject.Parse(zhHansJson);
+            var zhHansObj = JObject.Parse(zhHansJson);
 
             if (!File.Exists(localizationFile))
             {
@@ -798,7 +793,7 @@ public class UnpackBundle
             }
 
             string localizationJson = File.ReadAllText(localizationFile);
-            var localizationObj = Newtonsoft.Json.Linq.JObject.Parse(localizationJson);
+            var localizationObj = JObject.Parse(localizationJson);
 
             int addedCount = 0;
             int removedCount = 0;
@@ -830,7 +825,7 @@ public class UnpackBundle
 
             if (addedCount > 0 || removedCount > 0)
             {
-                string outputJson = Newtonsoft.Json.JsonConvert.SerializeObject(localizationObj, Newtonsoft.Json.Formatting.Indented);
+                string outputJson = JsonConvert.SerializeObject(localizationObj, Formatting.Indented);
                 File.WriteAllText(localizationFile, outputJson);
                 Console.WriteLine($"Synced {assetName} -> {Path.GetFileName(localizationFile)}: +{addedCount}, -{removedCount}");
             }
