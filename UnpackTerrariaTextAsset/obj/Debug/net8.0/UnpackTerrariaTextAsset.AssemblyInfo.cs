@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("UnpackTerrariaTextAsset")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+1a8ab2028dd6844042abab959bfcbdfbce991408")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+2d78bbe97e48ed93d1239ded7fe970768eaeb0a3")]
 [assembly: System.Reflection.AssemblyProductAttribute("UnpackTerrariaTextAsset")]
 [assembly: System.Reflection.AssemblyTitleAttribute("UnpackTerrariaTextAsset")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

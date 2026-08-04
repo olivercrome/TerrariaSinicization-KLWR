@@ -104,9 +104,13 @@ class Program
             return;
         }
 
+        // 传入两个路径：原汉化文件夹（用于en-US/zh-Hans）和害人汉化子文件夹（用于de-DE）
         ProcessAndSaveBundle(bundlePath, outputPath, unpack =>
         {
-            unpack.BatchLocalizationReplace(localizationFolder);
+            unpack.BatchLocalizationReplace(
+                localizationFolder,
+                Path.Combine(localizationFolder, "害人汉化")
+            );
         });
 
         Console.WriteLine($"本地化完成！输出文件: {outputPath}");
@@ -204,9 +208,13 @@ class Program
             return;
         }
 
+        // 传入两个路径：原汉化文件夹（用于en-US/zh-Hans）和害人汉化子文件夹（用于de-DE）
         ProcessAndSaveBundle(bundlePath, outputPath, unpack =>
         {
-            unpack.BatchLocalizationReplace(localizationFolder);
+            unpack.BatchLocalizationReplace(
+                localizationFolder,
+                Path.Combine(localizationFolder, "害人汉化")
+            );
             unpack.BatchReplaceFonts(fontWorkFolder);
         });
 

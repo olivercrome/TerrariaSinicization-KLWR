@@ -387,227 +387,290 @@ public class UnpackBundle
     // ============================================================
     // 自定义本地化替换（包含备份逻辑）
     // ============================================================
-    public void BatchLocalizationReplace(string localizationFolder)
+public void BatchLocalizationReplace(string localizationFolder, string hanhuaFolder)
+{
+    // ------------------------------------------------------------
+    // 第1步：原版中文 -> 日语（备份）
+    // ------------------------------------------------------------
+    Console.WriteLine("第1步：原版中文 (zh-Hans) 备份到日语 (ja-JP)");
+    foreach (var (assetKey, cont) in LoadAssets)
     {
-        // ------------------------------------------------------------
-        // 第1步：把原版中文（zh-Hans）备份到日语（ja-JP）
-        // ------------------------------------------------------------
-        Console.WriteLine("第1步：把原版中文 (zh-Hans) 备份到日语 (ja-JP)");
+        var baseField = AssetWorkspace.GetBaseField(cont);
+        if (baseField == null) continue;
+
+        var mNameField = baseField["m_Name"];
+        if (mNameField == null || mNameField.IsDummy) continue;
+
+        var assetName = mNameField.AsString;
+        if (string.IsNullOrEmpty(assetName) || assetName.Contains("_comp")) continue;
+
+        if (!assetName.StartsWith("zh-Hans.") && assetName != "zh-Hans") continue;
+
+        string category = assetName == "zh-Hans" ? "Base" : assetName.Substring("zh-Hans.".Length);
+        string jaJpAssetName = category == "Base" ? "ja-JP" : $"ja-JP.{category}";
+        var jaJpKey = LoadAssets.Keys.FirstOrDefault(k => k.StartsWith(jaJpAssetName));
+        if (jaJpKey == null)
+        {
+            Console.WriteLine($"  跳过 {assetName}: 未找到对应的 ja-JP 资源");
+            continue;
+        }
+
+        var jaJpCont = LoadAssets[jaJpKey];
+        var jaJpBaseField = AssetWorkspace.GetBaseField(jaJpCont);
+        if (jaJpBaseField == null) continue;
+
+        var zhScriptField = baseField["m_Script"];
+        if (zhScriptField == null || zhScriptField.IsDummy) continue;
+        byte[] zhData;
+        try { zhData = zhScriptField.AsByteArray; } catch { continue; }
+        if (zhData == null) continue;
+
+        var jaScriptField = jaJpBaseField["m_Script"];
+        if (jaScriptField == null || jaScriptField.IsDummy) continue;
+        jaScriptField.AsByteArray = zhData;
+
+        byte[] savedAsset = jaJpBaseField.WriteToByteArray();
+        var replacer = new AssetsReplacerFromMemory(jaJpCont.PathId, jaJpCont.ClassId, jaJpCont.MonoId, savedAsset);
+        AssetWorkspace.AddReplacer(jaJpCont.FileInstance, replacer, new MemoryStream(savedAsset));
+        Console.WriteLine($"  ✅ {assetName} -> {jaJpAssetName}");
+    }
+
+    // ------------------------------------------------------------
+    // 第2步：原版英文 -> 法语（备份）
+    // ------------------------------------------------------------
+    Console.WriteLine("第2步：原版英文 (en-US) 备份到法语 (fr-FR)");
+    var enUsOriginalData = new Dictionary<string, byte[]>();
+    foreach (var (assetKey, cont) in LoadAssets)
+    {
+        var baseField = AssetWorkspace.GetBaseField(cont);
+        if (baseField == null) continue;
+        var mNameField = baseField["m_Name"];
+        if (mNameField == null || mNameField.IsDummy) continue;
+        var assetName = mNameField.AsString;
+        if (string.IsNullOrEmpty(assetName) || assetName.Contains("_comp") || !assetName.StartsWith("en-US"))
+            continue;
+        var scriptField = baseField["m_Script"];
+        if (scriptField == null || scriptField.IsDummy) continue;
+        byte[] originalData;
+        try { originalData = scriptField.AsByteArray; } catch { continue; }
+        if (originalData == null) continue;
+        enUsOriginalData[assetKey] = originalData;
+    }
+
+    foreach (var (assetKey, cont) in LoadAssets)
+    {
+        var baseField = AssetWorkspace.GetBaseField(cont);
+        if (baseField == null) continue;
+        var mNameField = baseField["m_Name"];
+        if (mNameField == null || mNameField.IsDummy) continue;
+        var assetName = mNameField.AsString;
+        if (string.IsNullOrEmpty(assetName) || assetName.Contains("_comp") || !assetName.StartsWith("fr-FR"))
+            continue;
+        var matchingEnUsKey = FindMatchingEnUsAsset(assetName, LoadAssets.Keys);
+        if (matchingEnUsKey != null && enUsOriginalData.TryGetValue(matchingEnUsKey, out byte[] enData))
+        {
+            var scriptField = baseField["m_Script"];
+            if (scriptField == null || scriptField.IsDummy) continue;
+            scriptField.AsByteArray = enData;
+            byte[] savedAsset = baseField.WriteToByteArray();
+            var replacer = new AssetsReplacerFromMemory(cont.PathId, cont.ClassId, cont.MonoId, savedAsset);
+            AssetWorkspace.AddReplacer(cont.FileInstance, replacer, new MemoryStream(savedAsset));
+            Console.WriteLine($"  ✅ 已把原版英文备份到 {assetName}");
+        }
+    }
+
+    // ------------------------------------------------------------
+    // 第3步：原汉化文件覆盖英语（en-US）
+    // ------------------------------------------------------------
+    Console.WriteLine("第3步：原汉化文件覆盖英语 (en-US)");
+    foreach (var (assetKey, cont) in LoadAssets)
+    {
+        var baseField = AssetWorkspace.GetBaseField(cont);
+        if (baseField == null) continue;
+        var mNameField = baseField["m_Name"];
+        if (mNameField == null || mNameField.IsDummy) continue;
+        var assetName = mNameField.AsString;
+        if (string.IsNullOrEmpty(assetName) || assetName.Contains("_comp") || !assetName.StartsWith("en-US"))
+            continue;
+        var translationFile = MatchLocalizationFile(assetName, localizationFolder);
+        if (translationFile == null)
+        {
+            Console.WriteLine($"  跳过 {assetName}: 未找到对应的 JSON 文件");
+            continue;
+        }
+        var scriptField = baseField["m_Script"];
+        if (scriptField == null || scriptField.IsDummy) continue;
+        byte[] newData = File.ReadAllBytes(translationFile);
+        scriptField.AsByteArray = newData;
+        byte[] savedAsset = baseField.WriteToByteArray();
+        var replacer = new AssetsReplacerFromMemory(cont.PathId, cont.ClassId, cont.MonoId, savedAsset);
+        AssetWorkspace.AddReplacer(cont.FileInstance, replacer, new MemoryStream(savedAsset));
+        Console.WriteLine($"  ✅ 已用 {Path.GetFileName(translationFile)} 覆盖 {assetName}");
+    }
+
+    // ------------------------------------------------------------
+    // 第4步：原汉化文件覆盖中文（zh-Hans）
+    // ------------------------------------------------------------
+    Console.WriteLine("第4步：原汉化文件覆盖中文 (zh-Hans)");
+    foreach (var (assetKey, cont) in LoadAssets)
+    {
+        var baseField = AssetWorkspace.GetBaseField(cont);
+        if (baseField == null) continue;
+        var mNameField = baseField["m_Name"];
+        if (mNameField == null || mNameField.IsDummy) continue;
+        var assetName = mNameField.AsString;
+        if (string.IsNullOrEmpty(assetName) || assetName.Contains("_comp") || !assetName.StartsWith("zh-Hans"))
+            continue;
+        var translationFile = MatchLocalizationFile(assetName, localizationFolder);
+        if (translationFile == null)
+        {
+            Console.WriteLine($"  跳过 {assetName}: 未找到对应的 JSON 文件");
+            continue;
+        }
+        var scriptField = baseField["m_Script"];
+        if (scriptField == null || scriptField.IsDummy) continue;
+        byte[] newData = File.ReadAllBytes(translationFile);
+        scriptField.AsByteArray = newData;
+        byte[] savedAsset = baseField.WriteToByteArray();
+        var replacer = new AssetsReplacerFromMemory(cont.PathId, cont.ClassId, cont.MonoId, savedAsset);
+        AssetWorkspace.AddReplacer(cont.FileInstance, replacer, new MemoryStream(savedAsset));
+        Console.WriteLine($"  ✅ 已用 {Path.GetFileName(translationFile)} 覆盖 {assetName}");
+    }
+
+    // ------------------------------------------------------------
+    // 第5步（新增）：害人汉化覆盖德语（de-DE 或 de）
+    // ------------------------------------------------------------
+    Console.WriteLine("第5步：害人汉化覆盖德语");
+    var translationDict = new Dictionary<string, JToken>();
+    if (!Directory.Exists(hanhuaFolder))
+    {
+        Console.WriteLine($"  警告: 害人汉化文件夹不存在: {hanhuaFolder}，跳过德语覆盖。");
+    }
+    else
+    {
+        foreach (var file in Directory.GetFiles(hanhuaFolder, "*.json"))
+        {
+            try
+            {
+                string jsonContent = File.ReadAllText(file);
+                var obj = JObject.Parse(jsonContent);
+                foreach (var prop in obj.Properties())
+                {
+                    translationDict[prop.Name] = prop.Value;
+                }
+                Console.WriteLine($"  已加载 {Path.GetFileName(file)}，字典当前条目数: {translationDict.Count}");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"  加载失败 {Path.GetFileName(file)}: {ex.Message}");
+            }
+        }
+
+        Console.WriteLine($"  全局翻译字典构建完成，共 {translationDict.Count} 个条目。");
+
         foreach (var (assetKey, cont) in LoadAssets)
         {
             var baseField = AssetWorkspace.GetBaseField(cont);
             if (baseField == null) continue;
-
             var mNameField = baseField["m_Name"];
             if (mNameField == null || mNameField.IsDummy) continue;
-
             var assetName = mNameField.AsString;
             if (string.IsNullOrEmpty(assetName) || assetName.Contains("_comp")) continue;
 
-            if (!assetName.StartsWith("zh-Hans.") && assetName != "zh-Hans") continue;
-
-            string category;
-            if (assetName == "zh-Hans")
-                category = "Base";
-            else
-                category = assetName.Substring("zh-Hans.".Length);
-
-            string jaJpAssetName = (category == "Base") ? "ja-JP" : $"ja-JP.{category}";
-            var jaJpKey = LoadAssets.Keys.FirstOrDefault(k => k.StartsWith(jaJpAssetName));
-            if (jaJpKey == null)
-            {
-                Console.WriteLine($"  跳过 {assetName}: 未找到对应的 ja-JP 资源");
-                continue;
-            }
-
-            var jaJpCont = LoadAssets[jaJpKey];
-            var jaJpBaseField = AssetWorkspace.GetBaseField(jaJpCont);
-            if (jaJpBaseField == null) continue;
-
-            var zhScriptField = baseField["m_Script"];
-            if (zhScriptField == null || zhScriptField.IsDummy) continue;
-            byte[] zhData;
-            try { zhData = zhScriptField.AsByteArray; }
-            catch { continue; }
-            if (zhData == null) continue;
-
-            var jaScriptField = jaJpBaseField["m_Script"];
-            if (jaScriptField == null || jaScriptField.IsDummy) continue;
-            jaScriptField.AsByteArray = zhData;
-
-            byte[] savedAsset = jaJpBaseField.WriteToByteArray();
-            var replacer = new AssetsReplacerFromMemory(jaJpCont.PathId, jaJpCont.ClassId, jaJpCont.MonoId, savedAsset);
-            AssetWorkspace.AddReplacer(jaJpCont.FileInstance, replacer, new MemoryStream(savedAsset));
-            Console.WriteLine($"  ✅ {assetName} -> {jaJpAssetName}");
-        }
-
-        // ------------------------------------------------------------
-        // 第2步：把原版英文（en-US）备份到法语（fr-FR）
-        // ------------------------------------------------------------
-        Console.WriteLine("第2步：把原版英文 (en-US) 备份到法语 (fr-FR)");
-        var enUsOriginalData = new Dictionary<string, byte[]>();
-
-        foreach (var (assetKey, cont) in LoadAssets)
-        {
-            var baseField = AssetWorkspace.GetBaseField(cont);
-            if (baseField == null) continue;
-
-            var mNameField = baseField["m_Name"];
-            if (mNameField == null || mNameField.IsDummy) continue;
-
-            var assetName = mNameField.AsString;
-            if (string.IsNullOrEmpty(assetName) || assetName.Contains("_comp") || !assetName.StartsWith("en-US"))
-                continue;
+            // 兼容 de-DE 和 de 两种前缀
+            bool isGerman = assetName.StartsWith("de-DE") ||
+                            assetName.Equals("de", StringComparison.OrdinalIgnoreCase) ||
+                            assetName.StartsWith("de.");
+            if (!isGerman) continue;
 
             var scriptField = baseField["m_Script"];
             if (scriptField == null || scriptField.IsDummy) continue;
+
             byte[] originalData;
-            try { originalData = scriptField.AsByteArray; }
-            catch { continue; }
+            try { originalData = scriptField.AsByteArray; } catch { continue; }
             if (originalData == null) continue;
 
-            enUsOriginalData[assetKey] = originalData;
-        }
-
-        // 把备份的 en-US 数据写入 fr-FR
-        foreach (var (assetKey, cont) in LoadAssets)
-        {
-            var baseField = AssetWorkspace.GetBaseField(cont);
-            if (baseField == null) continue;
-
-            var mNameField = baseField["m_Name"];
-            if (mNameField == null || mNameField.IsDummy) continue;
-
-            var assetName = mNameField.AsString;
-            if (string.IsNullOrEmpty(assetName) || assetName.Contains("_comp") || !assetName.StartsWith("fr-FR"))
-                continue;
-
-            var matchingEnUsKey = FindMatchingEnUsAsset(assetName, LoadAssets.Keys);
-            if (matchingEnUsKey != null && enUsOriginalData.TryGetValue(matchingEnUsKey, out byte[] enData))
+            string originalJson = Encoding.UTF8.GetString(originalData);
+            JObject originalObj;
+            try { originalObj = JObject.Parse(originalJson); }
+            catch
             {
-                var scriptField = baseField["m_Script"];
-                if (scriptField == null || scriptField.IsDummy) continue;
-                scriptField.AsByteArray = enData;
+                Console.WriteLine($"  跳过 {assetName}: JSON 解析失败");
+                continue;
+            }
+
+            int replacedCount = 0;
+            foreach (var prop in originalObj.Properties())
+            {
+                if (translationDict.TryGetValue(prop.Name, out JToken translatedValue))
+                {
+                    originalObj[prop.Name] = translatedValue;
+                    replacedCount++;
+                }
+            }
+
+            if (replacedCount > 0)
+            {
+                string modifiedJson = originalObj.ToString(Newtonsoft.Json.Formatting.None);
+                byte[] newData = Encoding.UTF8.GetBytes(modifiedJson);
+                scriptField.AsByteArray = newData;
                 byte[] savedAsset = baseField.WriteToByteArray();
                 var replacer = new AssetsReplacerFromMemory(cont.PathId, cont.ClassId, cont.MonoId, savedAsset);
                 AssetWorkspace.AddReplacer(cont.FileInstance, replacer, new MemoryStream(savedAsset));
-                Console.WriteLine($"  ✅ 已把原版英文备份到 {assetName}");
+                Console.WriteLine($"  ✅ {assetName}: 替换了 {replacedCount} 个条目。");
             }
-        }
-
-        // ------------------------------------------------------------
-        // 第3步：把翻译文件覆盖到英语（en-US）
-        // ------------------------------------------------------------
-        Console.WriteLine("第3步：把翻译文件覆盖到英语 (en-US)");
-        foreach (var (assetKey, cont) in LoadAssets)
-        {
-            var baseField = AssetWorkspace.GetBaseField(cont);
-            if (baseField == null) continue;
-
-            var mNameField = baseField["m_Name"];
-            if (mNameField == null || mNameField.IsDummy) continue;
-
-            var assetName = mNameField.AsString;
-            if (string.IsNullOrEmpty(assetName) || assetName.Contains("_comp") || !assetName.StartsWith("en-US"))
-                continue;
-
-            var translationFile = MatchLocalizationFile(assetName, localizationFolder);
-            if (translationFile == null)
+            else
             {
-                Console.WriteLine($"  跳过 {assetName}: 未找到对应的 JSON 文件");
-                continue;
-            }
-
-            var scriptField = baseField["m_Script"];
-            if (scriptField == null || scriptField.IsDummy) continue;
-
-            byte[] newData = File.ReadAllBytes(translationFile);
-            scriptField.AsByteArray = newData;
-            byte[] savedAsset = baseField.WriteToByteArray();
-            var replacer = new AssetsReplacerFromMemory(cont.PathId, cont.ClassId, cont.MonoId, savedAsset);
-            AssetWorkspace.AddReplacer(cont.FileInstance, replacer, new MemoryStream(savedAsset));
-            Console.WriteLine($"  ✅ 已用 {Path.GetFileName(translationFile)} 覆盖 {assetName}");
-        }
-
-        // ------------------------------------------------------------
-        // 第4步：把翻译文件覆盖到中文（zh-Hans）
-        // ------------------------------------------------------------
-        Console.WriteLine("第4步：把翻译文件覆盖到中文 (zh-Hans)");
-        foreach (var (assetKey, cont) in LoadAssets)
-        {
-            var baseField = AssetWorkspace.GetBaseField(cont);
-            if (baseField == null) continue;
-
-            var mNameField = baseField["m_Name"];
-            if (mNameField == null || mNameField.IsDummy) continue;
-
-            var assetName = mNameField.AsString;
-            if (string.IsNullOrEmpty(assetName) || assetName.Contains("_comp") || !assetName.StartsWith("zh-Hans"))
-                continue;
-
-            var translationFile = MatchLocalizationFile(assetName, localizationFolder);
-            if (translationFile == null)
-            {
-                Console.WriteLine($"  跳过 {assetName}: 未找到对应的 JSON 文件");
-                continue;
-            }
-
-            var scriptField = baseField["m_Script"];
-            if (scriptField == null || scriptField.IsDummy) continue;
-
-            byte[] newData = File.ReadAllBytes(translationFile);
-            scriptField.AsByteArray = newData;
-            byte[] savedAsset = baseField.WriteToByteArray();
-            var replacer = new AssetsReplacerFromMemory(cont.PathId, cont.ClassId, cont.MonoId, savedAsset);
-            AssetWorkspace.AddReplacer(cont.FileInstance, replacer, new MemoryStream(savedAsset));
-            Console.WriteLine($"  ✅ 已用 {Path.GetFileName(translationFile)} 覆盖 {assetName}");
-        }
-
-        // ------------------------------------------------------------
-        // 第5步：更新所有语言的 Language 显示名
-        // ------------------------------------------------------------
-        Console.WriteLine("第5步：更新所有语言的 Language 字段");
-        var languageNames = new Dictionary<string, string>
-        {
-            ["English"] = "悠然汉化修正V8.2.1",
-            ["Spanish"] = "在此特别感谢:二柱子,lzup的技术指导!!",
-            ["French"] = "本汉化修正版本完全免费！禁止商业用途！抵制倒卖！",
-            ["Italian"] = "汉化版本仅提供内部玩家游玩!",
-            ["Russian"] = "在此特别感谢皮皮蛙大佬，汉化界的里程碑",
-            ["Chinese"] = "爱来自中文",
-            ["ChineseTraditional"] = "繁體中文",
-            ["ChineseSimplified"] = "皮皮蛙大佬我一生追随目标!!!!!!",
-            ["Japanese"] = "参考了皮皮蛙大佬汉化!",
-            ["Portuguese"] = "感谢P汉!参考了P汉!",
-            ["German"] = "汉化成员:B站(悠然_ing),(Dr.克伦威尔)",
-            ["Polish"] = "本汉化基于皮皮蛙大佬汉化进行145修正",
-            ["Korean"] = "玩的开心!"
-        };
-
-        var allLangCodes = new[] { "en-US", "zh-Hans", "ja-JP", "fr-FR", "es-ES", "de-DE", "it-IT", "pt-BR", "ru-RU", "pl-PL", "ko-KR", "zh-Hant" };
-        foreach (var (assetKey, cont) in LoadAssets)
-        {
-            var baseField = AssetWorkspace.GetBaseField(cont);
-            if (baseField == null) continue;
-
-            var mNameField = baseField["m_Name"];
-            if (mNameField == null || mNameField.IsDummy) continue;
-
-            var assetName = mNameField.AsString;
-            if (string.IsNullOrEmpty(assetName) || assetName.Contains("_comp")) continue;
-
-            if (allLangCodes.Contains(assetName))
-            {
-                ModifyAllLanguagesInAsset(baseField, languageNames);
-                byte[] savedAsset = baseField.WriteToByteArray();
-                var replacer = new AssetsReplacerFromMemory(cont.PathId, cont.ClassId, cont.MonoId, savedAsset);
-                AssetWorkspace.AddReplacer(cont.FileInstance, replacer, new MemoryStream(savedAsset));
-                Console.WriteLine($"  ✅ 已更新 {assetName} 的 Language 字段");
+                Console.WriteLine($"  跳过 {assetName}: 未匹配到任何翻译条目。");
             }
         }
-
-        Console.WriteLine("所有步骤执行完毕！");
     }
+
+    // ------------------------------------------------------------
+    // 第6步（原第5步）：更新所有语言的 Language 显示名
+    // ------------------------------------------------------------
+    Console.WriteLine("第6步：更新所有语言的 Language 字段");
+    var languageNames = new Dictionary<string, string>
+    {
+        ["English"] = "悠然汉化修正V8.2.1",
+        ["Spanish"] = "在此特别感谢:二柱子,lzup的技术指导!!",
+        ["French"] = "本汉化修正版本完全免费！禁止商业用途！抵制倒卖！",
+        ["Italian"] = "汉化成员:B站(悠然_ing),(Dr.克伦威尔)",
+        ["Russian"] = "在此特别感谢皮皮蛙大佬，汉化界的里程碑",
+        ["Chinese"] = "爱来自中文",
+        ["ChineseTraditional"] = "繁體中文",
+        ["ChineseSimplified"] = "皮皮蛙大佬我一生追随目标!!!!!!",
+        ["Japanese"] = "参考了皮皮蛙大佬汉化!",
+        ["Portuguese"] = "感谢P汉!参考了P汉!",
+        ["German"] = "Potralia的害人汉化（实验性测试）",
+        ["Polish"] = "本汉化基于皮皮蛙大佬汉化进行145修正",
+        ["Korean"] = "玩的开心!"
+    };
+
+    var allLangCodes = new[] { "en-US", "zh-Hans", "ja-JP", "fr-FR", "es-ES", "de-DE", "it-IT", "pt-BR", "ru-RU", "pl-PL", "ko-KR", "zh-Hant" };
+    foreach (var (assetKey, cont) in LoadAssets)
+    {
+        var baseField = AssetWorkspace.GetBaseField(cont);
+        if (baseField == null) continue;
+
+        var mNameField = baseField["m_Name"];
+        if (mNameField == null || mNameField.IsDummy) continue;
+
+        var assetName = mNameField.AsString;
+        if (string.IsNullOrEmpty(assetName) || assetName.Contains("_comp")) continue;
+
+        if (allLangCodes.Contains(assetName))
+        {
+            ModifyAllLanguagesInAsset(baseField, languageNames);
+            byte[] savedAsset = baseField.WriteToByteArray();
+            var replacer = new AssetsReplacerFromMemory(cont.PathId, cont.ClassId, cont.MonoId, savedAsset);
+            AssetWorkspace.AddReplacer(cont.FileInstance, replacer, new MemoryStream(savedAsset));
+            Console.WriteLine($"  ✅ 已更新 {assetName} 的 Language 字段");
+        }
+    }
+
+    Console.WriteLine("所有步骤执行完毕！");
+}
 
     // ------------------------------------------------------------
     // 辅助方法
