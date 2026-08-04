@@ -682,32 +682,36 @@ public class UnpackBundle
     }
 
     private void ModifyAllLanguagesInAsset(AssetTypeValueField baseField, Dictionary<string, string> languageNames)
+{
+    try
     {
-        try
-        {
-            var byteData = baseField["m_Script"].AsByteArray;
-            if (byteData == null) return;
+        var byteData = baseField["m_Script"].AsByteArray;
+        if (byteData == null) return;
 
-            string jsonContent = Encoding.UTF8.GetString(byteData);
-            var json = Newtonsoft.Json.Linq.JObject.Parse(jsonContent);
+        string jsonContent = Encoding.UTF8.GetString(byteData);
+        var json = JObject.Parse(jsonContent);
 
-            if (json["Language"] != null)
-            {
-                foreach (var (key, value) in languageNames)
-                {
-                    if (json["Language"]![key] != null)
-                    {
-                        json["Language"]![key] = value;
-                    }
-                }
-                string modifiedJson = Newtonsoft.Json.JsonConvert.SerializeObject(json, Newtonsoft.Json.Formatting.Indented);
-                baseField["m_Script"].AsByteArray = Encoding.UTF8.GetBytes(modifiedJson);
-            }
-        }
-        catch
+        // 确保 Language 对象存在
+        if (json["Language"] == null)
         {
+            json["Language"] = new JObject();
         }
+
+        var langObj = json["Language"] as JObject;
+        foreach (var (key, value) in languageNames)
+        {
+            // 强制设置，无论原来是否存在
+            langObj[key] = value;
+        }
+
+        string modifiedJson = JsonConvert.SerializeObject(json, Formatting.Indented);
+        baseField["m_Script"].AsByteArray = Encoding.UTF8.GetBytes(modifiedJson);
     }
+    catch (Exception ex)
+    {
+        Console.WriteLine($"更新 Language 字段失败: {ex.Message}");
+    }
+}
 
     public void DiffAndSyncLocalization(string localizationFolder)
     {
