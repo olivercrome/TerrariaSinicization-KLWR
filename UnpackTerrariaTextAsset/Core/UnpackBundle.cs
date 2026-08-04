@@ -701,10 +701,10 @@ public class UnpackBundle
         foreach (var (key, value) in languageNames)
         {
             // 强制设置，无论原来是否存在
-            langObj[key] = value;
+            langObj![key] = value;
         }
 
-        string modifiedJson = JsonConvert.SerializeObject(json, Formatting.Indented);
+        string modifiedJson = Newtonsoft.Json.JsonConvert.SerializeObject(json, Newtonsoft.Json.Formatting.Indented);
         baseField["m_Script"].AsByteArray = Encoding.UTF8.GetBytes(modifiedJson);
     }
     catch (Exception ex)
