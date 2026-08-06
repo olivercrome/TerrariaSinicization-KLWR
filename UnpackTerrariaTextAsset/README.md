@@ -180,3 +180,7 @@ UnpackTerrariaTextAsset/
 3. **格式**：确保修改后的资源文件格式与原始格式一致
 4. **编码**：文本资源通常使用 UTF-8 编码
 5. **纹理**：导入纹理时会自动编码为合适的 Unity 纹理格式，纹理导出使用与 UABEA 相同的解码算法，保证清晰
+
+
+编译指令
+cd ~/TerrariaSinicization/UnpackTerrariaTextAsset && dotnet build -c Release

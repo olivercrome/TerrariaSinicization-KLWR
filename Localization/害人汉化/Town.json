@@ -1,14 +1,14 @@
 {
   "TownNPCHousingFailureReasons": {
-    "TooCloseToWorldEdge": "这个房屋距离世界边缘太近了",
-    "RoomIsTooBig": "这个房屋太大了",
-    "RoomIsTooSmall": "这个房屋太小了",
-    "HoleInWallIsTooBig": "这个房屋缺少一面墙",
-    "RoomCheckStartedInASolidTile": "这是个实心块！",
-    "RoomHasAStinkbug": "这个房间有臭虫出没！",
-    "RoomHasAnEchoStinkbug": "这个房间有幽灵臭虫出没！",
-    "RoomHasNoStandingSpace": "这间房里没有站立的空间！",
-    "RoomHasUnsafeWalls": "这间房里的天然墙需要更换！"
+    "TooCloseToWorldEdge": "我不要住海边！",
+    "RoomIsTooBig": "你给巨人安家呢？",
+    "RoomIsTooSmall": "你给地精安家呢？",
+    "HoleInWallIsTooBig": "叶枫大豪宅？？",
+    "RoomCheckStartedInASolidTile": "你当我穿墙怪是吧",
+    "RoomHasAStinkbug": "喵的臭虫！",
+    "RoomHasAnEchoStinkbug": "喵的有隐形臭虫！",
+    "RoomHasNoStandingSpace": "你给我表演个悬浮宅家来？！",
+    "RoomHasUnsafeWalls": "天然墙你让我住？滚蛋！"
   },
   "MerchantNames": {
     "Alfred": "Alfred",

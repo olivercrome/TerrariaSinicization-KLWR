@@ -35,7 +35,7 @@
         "Submit": "取消",
         "Cancel": "提交",
         "WorldSizeUnknown": "你看看你开了个什么",
-        "Legendary": "[c/808080:             垃圾]"
+        "Legendary": "垃圾"
     },
     "Game": {
         "BedObstructed": "你的床已遗失或被阻挡。"

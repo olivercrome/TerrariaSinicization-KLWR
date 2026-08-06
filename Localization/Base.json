@@ -33,7 +33,7 @@
         "ChineseSimplified": "皮皮蛙大佬我一生追随目标!!!!!!",
         "Japanese": "参考了皮皮蛙大佬汉化!",
         "Portuguese": "感谢P汉!参考了P汉!",
-        "German": "Potralia的害人汉化(实验性测试)",
+        "German": "Potralia的害人汉化(害人pro Max)",
         "Polish": "本汉化基于皮皮蛙大佬汉化进行145修正",
         "Korean": "韩语"
     },
@@ -980,7 +980,7 @@
         "ExplorerCategory": "探险家",
         "SlayerCategory": "猎杀者",
         "NoCategory": "无",
-        "Completed": "成就已完成！{0}",
+        "Completed": "恭喜！成就：{0} 已完成！",
         "TIMBER_Name": "要致富先撸树！",
         "TIMBER_Description": "砍倒第一棵树。",
         "BENCHED_Name": "这是？工作台！",

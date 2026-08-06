@@ -580,8 +580,9 @@ public class UnpackBundle
         }
 
         // ------------------------------------------------------------
-        // 第6步：更新所有语言的 Language 显示名（只更新已存在的键）
+        // 第6步：更新所有语言的 Language 显示名（已禁用）
         // ------------------------------------------------------------
+        /*
         Console.WriteLine("第6步：更新所有语言的 Language 字段");
         var languageNames = new Dictionary<string, string>
         {
@@ -621,6 +622,8 @@ public class UnpackBundle
                 Console.WriteLine($"  ✅ 已更新 {assetName} 的 Language 字段");
             }
         }
+        */
+        Console.WriteLine("第6步：跳过 Language 字段更新");
 
         Console.WriteLine("所有步骤执行完毕！");
     }

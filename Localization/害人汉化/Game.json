@@ -555,10 +555,10 @@
     "BossDeerclops": "鹿角怪"
   },
   "Announcement": {
-    "HasBeenDefeated_Plural": "{0}已被打败！\n[c/808080:输入/bossdamage或/dmg来查看战斗统计数据]",
-    "HasBeenDefeated_Single": "{0}已被打败！\n[c/808080:输入/bossdamage或/dmg来查看战斗统计数据]",
-    "HasAwoken": "{0}已苏醒！",
-    "HasArrived": "{0}已到达！",
+    "HasBeenDefeated_Plural": "{0}走咯！",
+    "HasBeenDefeated_Single": "{0}走咯！",
+    "HasAwoken": "{0}来咯！",
+    "HasArrived": "{0}已苏醒！",
     "HomelessArrived_0": "{0}已抵达，但暂无可用住处。",
     "HomelessArrived_1": "{0}已抵达，正在寻找住处！",
     "HomelessArrived_2": "{0}已抵达，但没有房子！",
@@ -785,7 +785,7 @@
     "ScutlixMount": "火星蛞蝓",
     "Electrified": "触电",
     "MoonLeech": "月噬",
-    "Sunflower": "快乐",
+    "Sunflower": "一腔热血！！！",
     "MonsterBanner": "旗帜",
     "Rabies": "野性噬咬",
     "Webbed": "织网",
@@ -1458,7 +1458,7 @@
     "CrystalNinja": "+10%伤害\n+10%暴击率\n允许长距离冲刺",
     "Cactus": "15 伤害\n专家及大师模式下该伤害提升至30/45\n较强击退力\n对你造成碰撞伤害的敌怪也会受伤",
     "Gladiator": "免疫击退",
-    "ObsidianOutlaw": "+15%鞭子攻速\n+15%召唤伤害\n+30%鞭子攻击距离",
+    "ObsidianOutlaw": "\n免疫火块",
     "Angler": "-23%刷怪率\n-30%敌人数量上限",
     "AshWood": "-50%熔岩伤害\n-3.5秒着火debuff时长\n装备黑曜石玫瑰时完全免疫熔岩伤害\n处于Don't Dig Up世界时:\n熔岩减伤提升至64%",
     "ChlorophyteSummon": "+2召唤栏\n召唤一颗叶绿水晶将为你战斗\n朝敌怪发射必定命中的激光\n40帧冷却时间\n额外向你正在攻击的目标发射激光\n50帧冷却时间\n叶绿水晶:\n100 伤害\n很强击退力"
