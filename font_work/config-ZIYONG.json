@@ -50,7 +50,7 @@
       "description": "鼠标提示文字字体",
       "charInfoFile": "./FontInfo/Mouse_Text.txt",
       "sourceFont": "./unifont-17.0.04.ttf",
-      "monoDigitWidth": -1"
+      "monoDigitWidth": -1
     }
   },
   "conversion": {
