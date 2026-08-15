@@ -11,24 +11,19 @@ param(
 $ErrorActionPreference = "Stop"
 $ScriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
 Push-Location $ScriptDir
-# 强制切换工作目录到脚本所在目录
 Set-Location $ScriptDir
 
-# 辅助函数：检查文件是否存在（使用绝对路径 + .NET 方法）
 function FileExists([string]$path) {
     if ([string]::IsNullOrEmpty($path)) { return $false }
-    # 尝试基于当前目录解析相对路径
     $fullPath = Join-Path (Get-Location) $path
     return [System.IO.File]::Exists($fullPath)
 }
 
-# 辅助函数：获取文件的绝对路径（用于日志）
 function Get-FullPath([string]$path) {
     if ([string]::IsNullOrEmpty($path)) { return $null }
     return Join-Path (Get-Location) $path
 }
 
-# 读取配置文件
 $ConfigPath = Join-Path $ScriptDir $ConfigFile
 if (-not (Test-Path $ConfigPath)) {
     Write-Host "✗ 配置文件不存在: $ConfigPath" -ForegroundColor Red
@@ -37,72 +32,75 @@ if (-not (Test-Path $ConfigPath)) {
 Write-Host "使用配置文件: $ConfigFile" -ForegroundColor Cyan
 $Config = Get-Content $ConfigPath | ConvertFrom-Json
 
-# 字体配置列表（包含可选的 sourceFont）
 $fontConfigs = @{}
 foreach ($fontName in $Config.fonts.PSObject.Properties.Name) {
     $fontData = $Config.fonts.$fontName
-    # 规范化 configFile，去除开头的 ./ （如果存在）
     $normalizedConfigFile = $fontData.configFile -replace '^\./', ''
+
+    # 读取该字体自己的 digitCompensation（如果配置了）
+    $fontDigitCompensation = $null
+    if ($fontData.PSObject.Properties.Name -contains 'digitCompensation') {
+        $fontDigitCompensation = [float]$fontData.digitCompensation
+    }
+
     $fontConfigs[$fontName] = @{
-        ConfigFile    = $normalizedConfigFile
-        OutputDir     = $fontData.outputDir
-        FontFile      = $fontData.fontFile
-        TxtFile       = $fontData.txtFile
-        Description   = $fontData.description
-        CharInfoFile  = $fontData.charInfoFile
-        SourceFont    = if ($fontData.PSObject.Properties.Name -contains 'sourceFont') {
-                            $fontData.sourceFont
-                        } else {
-                            $null
-                        }
+        ConfigFile          = $normalizedConfigFile
+        OutputDir           = $fontData.outputDir
+        FontFile            = $fontData.fontFile
+        TxtFile             = $fontData.txtFile
+        Description         = $fontData.description
+        CharInfoFile        = $fontData.charInfoFile
+        SourceFont          = if ($fontData.PSObject.Properties.Name -contains 'sourceFont') {
+                                  $fontData.sourceFont
+                              } else {
+                                  $null
+                              }
+        DigitCompensation   = $fontDigitCompensation
     }
 }
 
-# 全局配置
 $BMFontExe = $Config.global.bmfontExe
 $XnaFontRebuilder = $Config.global.xnaFontRebuilder
 $GlobalSourceFont = $Config.global.sourceFont
 $FontInfoDir = $Config.global.fontInfoDir
 
-# 转换参数
+# 全局转换参数
 $LatinCompensation = $Config.conversion.latinCompensation
 $CharSpacing = $Config.conversion.charSpacing
+$DigitCompensation = if ($Config.conversion.PSObject.Properties.Name -contains 'digitCompensation') {
+    [float]$Config.conversion.digitCompensation
+} else {
+    0
+}
 
-# 公共函数：检查环境
 function Test-Environment {
     Write-Host "`n[环境检查]" -ForegroundColor Cyan
     
-    # 检查 .NET SDK
     $dotnetVersion = dotnet --version 2>$null
     if (-not $dotnetVersion) {
         Write-Host "  ✗ 未检测到 .NET SDK" -ForegroundColor Red
-        Write-Host "    请安装 .NET 8.0 SDK: https://dotnet.microsoft.com/download/dotnet/8.0" -ForegroundColor Yellow
         return $false
     }
     Write-Host "  ✓ .NET SDK $dotnetVersion" -ForegroundColor Green
     
-    # 检查 BMFont
     if (-not (FileExists $BMFontExe)) {
         Write-Host "  ✗ 未找到 bmfont64.com" -ForegroundColor Red
         return $false
     }
     Write-Host "  ✓ bmfont64.com" -ForegroundColor Green
     
-    # 检查源字体
     if (-not (FileExists $GlobalSourceFont)) {
         Write-Host "  ✗ 未找到全局源字体: $GlobalSourceFont" -ForegroundColor Red
         return $false
     }
     Write-Host "  ✓ 全局源字体: $GlobalSourceFont" -ForegroundColor Green
     
-    # 检查 FontInfo 目录
     if (-not (Test-Path $FontInfoDir -PathType Container)) {
         Write-Host "  ✗ 未找到 FontInfo 目录" -ForegroundColor Red
         return $false
     }
     Write-Host "  ✓ FontInfo 目录" -ForegroundColor Green
     
-    # 检查 XnaFontRebuilder 项目
     if (-not (Test-Path ".\XnaFontRebuilder\XnaFontRebuilder.csproj" -PathType Leaf)) {
         Write-Host "  ✗ 未找到 XnaFontRebuilder 项目" -ForegroundColor Red
         return $false
@@ -112,7 +110,6 @@ function Test-Environment {
     return $true
 }
 
-# 公共函数：构建 XnaFontRebuilder
 function Build-XnaFontRebuilder {
     Write-Host "`n[构建 XnaFontRebuilder]" -ForegroundColor Cyan
     
@@ -121,25 +118,19 @@ function Build-XnaFontRebuilder {
         try {
             Push-Location ".\XnaFontRebuilder"
             dotnet build -c Release --no-incremental | Out-Null
-            if ($LASTEXITCODE -ne 0) {
-                throw "构建失败"
-            }
+            if ($LASTEXITCODE -ne 0) { throw "构建失败" }
             Pop-Location
             Write-Host "  ✓ 构建成功" -ForegroundColor Green
-        }
-        catch {
+        } catch {
             Write-Host "  ✗ 构建失败: $_" -ForegroundColor Red
             return $false
         }
-    }
-    else {
+    } else {
         Write-Host "  ✓ 已存在，跳过构建" -ForegroundColor Green
     }
-    
     return $true
 }
 
-# 公共函数：生成配置文件（支持每个字体独立源字体）
 function Generate-ConfigFile {
     param(
         [string]$FontName,
@@ -148,14 +139,12 @@ function Generate-ConfigFile {
     
     Write-Host "  [0/3] 生成配置文件..." -ForegroundColor Yellow
     
-    # 检查字符信息文件是否存在
     if (-not (FileExists $FontConfig.CharInfoFile)) {
         Write-Host "    ✗ 字符信息文件不存在: $($FontConfig.CharInfoFile)" -ForegroundColor Red
         return $false
     }
     
     try {
-        # 确定使用哪个字体文件（优先使用字体自带的 sourceFont，否则用全局）
         if ($FontConfig.SourceFont) {
             $fontSource = $FontConfig.SourceFont
             Write-Host "    使用字体（专属）: $fontSource" -ForegroundColor Gray
@@ -164,36 +153,25 @@ function Generate-ConfigFile {
             Write-Host "    使用字体（全局）: $fontSource" -ForegroundColor Gray
         }
 
-        # 使用 --build-cfg-auto 命令生成配置文件
         $cmdArgs = @(
-            "`"$XnaFontRebuilder`""
-            "--build-cfg-auto"
-            "`"$($FontConfig.CharInfoFile)`""
-            "`"$($FontConfig.ConfigFile)`""
+            "`"$XnaFontRebuilder`"",
+            "--build-cfg-auto",
+            "`"$($FontConfig.CharInfoFile)`"",
+            "`"$($FontConfig.ConfigFile)`"",
             "`"$fontSource`""
         )
-
         $cmd = "dotnet " + ($cmdArgs -join " ")
         Invoke-Expression $cmd
-        
-        if ($LASTEXITCODE -ne 0) {
-            throw "配置文件生成失败，退出代码: $LASTEXITCODE"
-        }
-        
-        if (-not (FileExists $FontConfig.ConfigFile)) {
-            throw "未找到生成的配置文件"
-        }
-        
+        if ($LASTEXITCODE -ne 0) { throw "配置文件生成失败，退出代码: $LASTEXITCODE" }
+        if (-not (FileExists $FontConfig.ConfigFile)) { throw "未找到生成的配置文件" }
         Write-Host "    ✓ 配置文件生成成功: $($FontConfig.ConfigFile)" -ForegroundColor Green
         return $true
-    }
-    catch {
+    } catch {
         Write-Host "    ✗ 失败: $_" -ForegroundColor Red
         return $false
     }
 }
 
-# 公共函数：生成单个字体
 function Generate-Font {
     param(
         [string]$FontName,
@@ -207,16 +185,12 @@ function Generate-Font {
     
     $startTime = Get-Date
     
-    # 步骤0: 检查配置文件是否已存在
     $configFullPath = $FontConfig.ConfigFile
     if (FileExists $configFullPath) {
         Write-Host "  [0/3] 使用现有配置文件: $configFullPath" -ForegroundColor Yellow
     } else {
         Write-Host "  [0/3] 生成配置文件..." -ForegroundColor Yellow
-        if (-not (Generate-ConfigFile -FontName $FontName -FontConfig $FontConfig)) {
-            return $false
-        }
-        # 重新获取路径（可能已生成）
+        if (-not (Generate-ConfigFile -FontName $FontName -FontConfig $FontConfig)) { return $false }
         $configFullPath = $FontConfig.ConfigFile
         if (-not (FileExists $configFullPath)) {
             Write-Host "  ✗ 配置文件生成失败: $configFullPath" -ForegroundColor Red
@@ -224,7 +198,6 @@ function Generate-Font {
         }
     }
     
-    # 确保输出目录存在
     if (-not (Test-Path $FontConfig.OutputDir -PathType Container)) {
         New-Item -ItemType Directory -Path $FontConfig.OutputDir -Force | Out-Null
         Write-Host "  ✓ 创建输出目录: $($FontConfig.OutputDir)" -ForegroundColor Gray
@@ -233,66 +206,52 @@ function Generate-Font {
     $fontPath = Join-Path $FontConfig.OutputDir $FontConfig.FontFile
     $txtPath = Join-Path $FontConfig.OutputDir $FontConfig.TxtFile
     
-    # 步骤1: 生成 BMFont
     Write-Host "  [1/3] 生成 BMFont 文件..." -ForegroundColor Yellow
     try {
-        # 获取配置文件的绝对路径
         $configAbs = Join-Path (Get-Location) $configFullPath
         $fontAbs = Join-Path (Get-Location) $fontPath
-        
         $process = Start-Process -FilePath $BMFontExe `
             -ArgumentList "-c `"$configAbs`" -o `"$fontAbs`"" `
             -Wait -PassThru -NoNewWindow -WorkingDirectory $ScriptDir
-        
-        if ($process.ExitCode -ne 0) {
-            throw "BMFont 生成失败，退出代码: $($process.ExitCode)"
-        }
-        
-        if (-not (FileExists $fontPath)) {
-            throw "未找到生成的 .fnt 文件"
-        }
-        
-        # 统计生成的图片
+        if ($process.ExitCode -ne 0) { throw "BMFont 生成失败，退出代码: $($process.ExitCode)" }
+        if (-not (FileExists $fontPath)) { throw "未找到生成的 .fnt 文件" }
         $pngFiles = Get-ChildItem -Path $FontConfig.OutputDir -Filter "$($FontName)_*.png" -ErrorAction SilentlyContinue
         Write-Host "    ✓ 生成成功，纹理图片: $($pngFiles.Count) 张" -ForegroundColor Green
-    }
-    catch {
+    } catch {
         Write-Host "    ✗ 失败: $_" -ForegroundColor Red
         return $false
     }
     
-    # 步骤2: 转换格式（使用新的 --convert 命令）
     Write-Host "  [2/3] 转换为 TXT 格式..." -ForegroundColor Yellow
     try {
-        dotnet $XnaFontRebuilder --convert $fontPath $txtPath --latin-compensation $LatinCompensation --char-spacing $CharSpacing
-        
-        if ($LASTEXITCODE -ne 0) {
-            throw "格式转换失败，退出代码: $LASTEXITCODE"
+        # 决定该字体使用哪个数字补偿值
+        $actualDigitComp = if ($null -ne $FontConfig.DigitCompensation) {
+            $FontConfig.DigitCompensation
+        } else {
+            $DigitCompensation
         }
+
+        dotnet $XnaFontRebuilder --convert $fontPath $txtPath `
+            --latin-compensation $LatinCompensation `
+            --char-spacing $CharSpacing `
+            --digit-compensation $actualDigitComp
         
-        if (-not (FileExists $txtPath)) {
-            throw "未找到生成的 .txt 文件"
-        }
-        
-        Write-Host "    ✓ 转换成功" -ForegroundColor Green
-    }
-    catch {
+        if ($LASTEXITCODE -ne 0) { throw "格式转换失败，退出代码: $LASTEXITCODE" }
+        if (-not (FileExists $txtPath)) { throw "未找到生成的 .txt 文件" }
+        Write-Host "    ✓ 转换成功（数字补偿: $actualDigitComp）" -ForegroundColor Green
+    } catch {
         Write-Host "    ✗ 失败: $_" -ForegroundColor Red
         return $false
     }
     
-    # 步骤3: 验证输出
     Write-Host "  [3/3] 验证输出文件..." -ForegroundColor Yellow
-    
     $fntSize = (Get-Item $fontPath).Length
     $txtSize = (Get-Item $txtPath).Length
     $pngCount = (Get-ChildItem -Path $FontConfig.OutputDir -Filter "*.png").Count
-    
     Write-Host "    ✓ .fnt: $([math]::Round($fntSize/1KB, 2)) KB" -ForegroundColor Green
     Write-Host "    ✓ .txt: $([math]::Round($txtSize/1KB, 2)) KB" -ForegroundColor Green
     Write-Host "    ✓ 纹理: $pngCount 张图片" -ForegroundColor Green
     
-    # 保留临时配置文件
     if (FileExists $configFullPath) {
         Write-Host "    ✓ 保留配置文件: $configFullPath" -ForegroundColor Green
     }
@@ -300,16 +259,13 @@ function Generate-Font {
     $endTime = Get-Date
     $duration = ($endTime - $startTime).TotalSeconds
     Write-Host "  ✅ $FontName 生成完成，耗时: $([math]::Round($duration, 2)) 秒" -ForegroundColor Green
-    
     return $true
 }
 
-# 公共函数：列出所有可用字体
 function Show-AvailableFonts {
     Write-Host "`n可用字体列表:" -ForegroundColor Cyan
     Write-Host ("{0,-15} {1,-30} {2,-20} {3}" -f "名称", "描述", "字符信息文件", "配置文件") -ForegroundColor Gray
     Write-Host ("{0,-15} {1,-30} {2,-20} {3}" -f "----", "----", "--------", "--------") -ForegroundColor Gray
-    
     foreach ($name in $fontConfigs.Keys | Sort-Object) {
         $fontCfg = $fontConfigs[$name]
         $charExists = if (FileExists $fontCfg.CharInfoFile) { "✓" } else { "✗" }
@@ -318,7 +274,6 @@ function Show-AvailableFonts {
     }
 }
 
-# 显示帮助信息
 function Show-Help {
     Write-Host @"
 ╔══════════════════════════════════════════════════════════════╗
@@ -327,6 +282,7 @@ function Show-Help {
 ║ 功能: 从 FontInfo 目录的字符信息文件生成字体                 ║
 ║       自动生成配置文件 -> 调用 BMFont -> 转换为 XNA 格式     ║
 ║       支持每个字体独立指定源字体（config.json 中 sourceFont）║
+║       支持每个字体独立指定数字补偿值（digitCompensation）    ║
 ╠══════════════════════════════════════════════════════════════╣
 ║ 用法:                                                        ║
 ║   .\FontXnaBuilder.ps1 [参数]                                ║
@@ -347,7 +303,6 @@ function Show-Help {
 "@
 }
 
-# 主函数
 function Main {
     param(
         [switch]$List,
@@ -356,36 +311,22 @@ function Main {
         [switch]$Rebuild
     )
     
-    # 显示帮助
-    if ($Help) {
-        Show-Help
-        return
-    }
+    if ($Help) { Show-Help; return }
+    if ($List) { Show-AvailableFonts; return }
     
-    # 列出字体
-    if ($List) {
-        Show-AvailableFonts
-        return
-    }
-    
-    # 显示标题
     Write-Host "╔══════════════════════════════════════════════════════════════╗" -ForegroundColor Cyan
     Write-Host "║                    字体批量生成工具 v3.1                      ║" -ForegroundColor Cyan
     Write-Host "╚══════════════════════════════════════════════════════════════╝" -ForegroundColor Cyan
     Write-Host "开始时间: $(Get-Date -Format 'yyyy-MM-dd HH:mm:ss')" -ForegroundColor Yellow
     
-    # 环境检查
     if (-not (Test-Environment)) {
         Write-Host "`n❌ 环境检查失败，请解决上述问题后重试" -ForegroundColor Red
         exit 1
     }
     
-    # 构建 XnaFontRebuilder
     if ($Rebuild) {
         Write-Host "`n[强制重新构建]" -ForegroundColor Yellow
-        if (FileExists $XnaFontRebuilder) {
-            Remove-Item $XnaFontRebuilder -Force
-        }
+        if (FileExists $XnaFontRebuilder) { Remove-Item $XnaFontRebuilder -Force }
     }
     
     if (-not (Build-XnaFontRebuilder)) {
@@ -393,11 +334,8 @@ function Main {
         exit 1
     }
     
-    # 确定要生成的字体列表
     $fontsToGenerate = @{}
-    
     if ($Font) {
-        # 生成单个字体
         if ($fontConfigs.ContainsKey($Font)) {
             $fontsToGenerate[$Font] = $fontConfigs[$Font]
             Write-Host "`n🎯 目标字体: $Font" -ForegroundColor Cyan
@@ -407,12 +345,10 @@ function Main {
             exit 1
         }
     } else {
-        # 生成所有字体
         $fontsToGenerate = $fontConfigs
         Write-Host "`n🎯 目标: 生成所有字体 ($($fontConfigs.Count) 个)" -ForegroundColor Cyan
     }
 
-    # ─── 统一检索现有配置文件状态（带调试信息） ───
     Write-Host "`n[检索现有配置文件状态]" -ForegroundColor Cyan
     Write-Host "  当前工作目录: $(Get-Location)" -ForegroundColor Gray
     $configStatus = @{}
@@ -438,23 +374,17 @@ function Main {
     } else {
         Write-Host "  所有配置文件均已存在，将直接使用。" -ForegroundColor Green
     }
-    Write-Host ""  # 空行，使输出更清晰
+    Write-Host ""
     
-    # 执行生成
     $successList = @()
     $failList = @()
     $totalStart = Get-Date
     
     foreach ($name in $fontsToGenerate.Keys | Sort-Object) {
         $result = Generate-Font -FontName $name -FontConfig $fontsToGenerate[$name]
-        if ($result) {
-            $successList += $name
-        } else {
-            $failList += $name
-        }
+        if ($result) { $successList += $name } else { $failList += $name }
     }
     
-    # 输出总结
     $totalEnd = Get-Date
     $totalDuration = ($totalEnd - $totalStart).TotalSeconds
     
@@ -475,13 +405,10 @@ function Main {
     
     if ($failList.Count -gt 0) {
         Write-Host "`n❌ 失败: $($failList.Count) 个" -ForegroundColor Red
-        foreach ($name in $failList) {
-            Write-Host "   • $name" -ForegroundColor Red
-        }
+        foreach ($name in $failList) { Write-Host "   • $name" -ForegroundColor Red }
     }
     
     Write-Host ""
-    
     if ($failList.Count -eq 0) {
         Write-Host "🎉 所有字体生成成功！" -ForegroundColor Green
         exit 0
@@ -491,7 +418,5 @@ function Main {
     }
 }
 
-# 解析参数并执行
 Main @args
-
 Pop-Location

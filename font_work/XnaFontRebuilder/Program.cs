@@ -21,7 +21,7 @@ class Program
                 if (args.Length < 2)
                 {
                     Console.WriteLine("Usage: XnaFontRebuilder --convert <input.fnt> [output.txt] [options]");
-                    Console.WriteLine("Options: --line-height <value>, --ascii-extra-spacing <value>, --character-spacing-compensation <value>");
+                    Console.WriteLine("Options: --line-height <value>, --ascii-extra-spacing <value>, --character-spacing-compensation <value>, --digit-compensation <value>");
                     return 1;
                 }
 
@@ -62,7 +62,7 @@ class Program
     static string GetFontName(string path)
     {
         var description = FontDescription.LoadDescription(path);
-       return description.GetNameById(new CultureInfo("zh-CN"), SixLabors.Fonts.WellKnownIds.KnownNameIds.FontFamilyName);
+        return description.GetNameById(new CultureInfo("zh-CN"), SixLabors.Fonts.WellKnownIds.KnownNameIds.FontFamilyName);
     }
 
     #region 基础转换核心逻辑
@@ -89,7 +89,7 @@ class Program
 
         foreach (var charElement in charElements)
         {
-            WriteGlyphRecord(writer, charElement, options.AsciiExtraSpacing, options.CharacterSpacingCompensation);
+            WriteGlyphRecord(writer, charElement, options.AsciiExtraSpacing, options.CharacterSpacingCompensation, options.DigitCompensation);
         }
 
         writer.Write(lineHeight);
@@ -99,7 +99,7 @@ class Program
         writer.Write((byte)0);
     }
 
-    static void WriteGlyphRecord(BinaryWriter writer, XElement charElement, float asciiExtraSpacing, float characterSpacingCompensation)
+    static void WriteGlyphRecord(BinaryWriter writer, XElement charElement, float asciiExtraSpacing, float characterSpacingCompensation, float digitCompensation)
     {
         int id = ParseInt(charElement.Attribute("id"), "char.id");
         int x = ParseInt(charElement.Attribute("x"), "char.x");
@@ -111,11 +111,21 @@ class Program
         int xAdvance = ParseInt(charElement.Attribute("xadvance"), "char.xadvance");
         byte page = ParseByte(charElement.Attribute("page"), "char.page");
 
+        // 全局字符间距补偿
         xAdvance = (int)(xAdvance + characterSpacingCompensation);
+
+        // ASCII 字符（含数字）的额外间距补偿
         if (id >= 33 && id <= 127)
         {
             xAdvance = (int)(xAdvance + (2f * asciiExtraSpacing));
             xOffset += asciiExtraSpacing;
+        }
+
+        // 数字字符专用额外补偿（解决数字太窄被遮挡问题）
+        if (id >= 48 && id <= 57)
+        {
+            xAdvance = (int)(xAdvance + digitCompensation);
+            xOffset += digitCompensation / 2f; // 使字形居中
         }
 
         writer.Write(x);
@@ -146,6 +156,7 @@ class Program
         int lineHeightOverride = 0;
         float asciiExtraSpacing = 0f;
         float characterSpacingCompensation = 0f;
+        float digitCompensation = 0f;
 
         var remaining = args.Skip(1).ToList();
         bool outputSet = false;
@@ -184,6 +195,13 @@ class Program
                             throw new ArgumentException("--character-spacing-compensation requires a value.");
                         characterSpacingCompensation = float.Parse(remaining[++i], CultureInfo.InvariantCulture);
                         break;
+                    case "--digit-compensation":
+                    case "--digitCompensation":
+                    case "--digit-spacing":
+                        if (i + 1 >= remaining.Count)
+                            throw new ArgumentException("--digit-compensation requires a value.");
+                        digitCompensation = float.Parse(remaining[++i], CultureInfo.InvariantCulture);
+                        break;
                     default:
                         throw new ArgumentException($"Unknown argument: {arg}");
                 }
@@ -207,6 +225,10 @@ class Program
                 {
                     characterSpacingCompensation = float.Parse(arg, CultureInfo.InvariantCulture);
                 }
+                else if (digitCompensation == 0f)
+                {
+                    digitCompensation = float.Parse(arg, CultureInfo.InvariantCulture);
+                }
                 else
                 {
                     throw new ArgumentException("Too many positional arguments.");
@@ -214,7 +236,7 @@ class Program
             }
         }
 
-        return new BaseConversionOptions(inputPath, outputPath, lineHeightOverride, asciiExtraSpacing, characterSpacingCompensation);
+        return new BaseConversionOptions(inputPath, outputPath, lineHeightOverride, asciiExtraSpacing, characterSpacingCompensation, digitCompensation);
     }
     #endregion
 
@@ -235,14 +257,13 @@ class Program
                 ids.Add(glyph.Id);
             }
 
-            // 读取尾部 lineHeight（位于所有字符记录之后）
             if (reader.BaseStream.Position < reader.BaseStream.Length)
             {
                 lineHeight = reader.ReadInt32();
             }
             else
             {
-                lineHeight = 62; // fallback
+                lineHeight = 62;
                 Console.WriteLine("Warning: No lineHeight found in file, using default 62.");
             }
         }
@@ -250,23 +271,20 @@ class Program
         GenerateCfg(ids, lineHeight, outputPath, fontPath);
     }
 
-    /// <summary>
-    /// 读取一个字符记录（与 WriteGlyphRecord 格式完全一致）
-    /// </summary>
     static GlyphRecord ReadGlyphRecord(BinaryReader reader)
     {
         int x = reader.ReadInt32();
         int y = reader.ReadInt32();
         int width = reader.ReadInt32();
         int height = reader.ReadInt32();
-        int unknown1 = reader.ReadInt32(); // skip (always 0)
+        int unknown1 = reader.ReadInt32();
         int yOffset = reader.ReadInt32();
         int xAdvance = reader.ReadInt32();
-        int unknown2 = reader.ReadInt32(); // skip (always 0)
+        int unknown2 = reader.ReadInt32();
         ushort id = reader.ReadUInt16();
         float xOffset = reader.ReadSingle();
-        float floatWidth = reader.ReadSingle(); // skip
-        float something = reader.ReadSingle();  // skip
+        float floatWidth = reader.ReadSingle();
+        float something = reader.ReadSingle();
         byte page = reader.ReadByte();
 
         return new GlyphRecord
@@ -398,7 +416,7 @@ class Program
     {
         Console.WriteLine("Usage:");
         Console.WriteLine("  XnaFontRebuilder --convert <input.fnt> [output.txt] [options]");
-        Console.WriteLine("    Options: --line-height <value>, --ascii-extra-spacing <value>, --character-spacing-compensation <value>");
+        Console.WriteLine("    Options: --line-height <value>, --ascii-extra-spacing <value>, --character-spacing-compensation <value>, --digit-compensation <value>");
         Console.WriteLine("  XnaFontRebuilder --build-cfg-auto <input.bin> <output.cfg> <fontPath>");
     }
     #endregion
@@ -409,7 +427,8 @@ internal sealed record BaseConversionOptions(
     string OutputPath,
     int LineHeightOverride,
     float AsciiExtraSpacing,
-    float CharacterSpacingCompensation
+    float CharacterSpacingCompensation,
+    float DigitCompensation
 );
 
 struct GlyphRecord
