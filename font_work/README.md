@@ -99,6 +99,7 @@ font_work/
 **conversion** - 转换参数：
 - `latinCompensation`: 拉丁字母额外间距补偿
 - `charSpacing`: 全局字符间距补偿
+- `monoDigitWidth`: 数字字符间距补偿[0禁用，-1取最大，正数固定值]
 
 ## 字体制作流程
 

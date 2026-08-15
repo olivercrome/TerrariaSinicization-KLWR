@@ -40,7 +40,8 @@
       "txtFile": "Death_Text.txt",
       "description": "死亡文字字体",
       "charInfoFile": "./FontInfo/Death_Text.txt",
-      "sourceFont": "./unifont-17.0.04.ttf"
+      "sourceFont": "./unifont-17.0.04.ttf",
+      "digitCompensation": 0.7
     },
     "Mouse_Text": {
       "configFile": "./Mouse_Text_ziyong.bmfc",
@@ -56,6 +57,7 @@
   "conversion": {
     "latinCompensation": 0.3,
     "charSpacing": 0.6,
-    "digitCompensation": 0.5
+    "digitCompensation": 0.5,
+    "punctuationCompensation": 0.4
   }
 }

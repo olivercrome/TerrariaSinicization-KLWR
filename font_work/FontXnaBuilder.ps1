@@ -84,6 +84,11 @@ $MonoDigitWidth = if ($Config.conversion.PSObject.Properties.Name -contains 'mon
 } else {
     0
 }
+$PunctuationCompensation = if ($Config.conversion.PSObject.Properties.Name -contains 'punctuationCompensation') {
+    [float]$Config.conversion.punctuationCompensation
+} else {
+    0
+}
 
 function Test-Environment {
     Write-Host "`n[环境检查]" -ForegroundColor Cyan
@@ -252,11 +257,12 @@ function Generate-Font {
             --latin-compensation $LatinCompensation `
             --char-spacing $CharSpacing `
             --digit-compensation $actualDigitComp `
-            --mono-digit-width $actualMonoWidth
+            --mono-digit-width $actualMonoWidth `
+            --punctuation-compensation $PunctuationCompensation
         
         if ($LASTEXITCODE -ne 0) { throw "格式转换失败，退出代码: $LASTEXITCODE" }
         if (-not (FileExists $txtPath)) { throw "未找到生成的 .txt 文件" }
-        Write-Host "    ✓ 转换成功（数字补偿: $actualDigitComp, 等宽宽度: $actualMonoWidth）" -ForegroundColor Green
+        Write-Host "    ✓ 转换成功（数字补偿: $actualDigitComp, 等宽宽度: $actualMonoWidth, 标点补偿: $PunctuationCompensation）" -ForegroundColor Green
     } catch {
         Write-Host "    ✗ 失败: $_" -ForegroundColor Red
         return $false
@@ -302,6 +308,7 @@ function Show-Help {
 ║       支持每个字体独立指定源字体（config.json 中 sourceFont）║
 ║       支持每个字体独立指定数字补偿（digitCompensation）      ║
 ║       支持每个字体独立指定数字等宽（monoDigitWidth）         ║
+║       支持全局标点补偿（punctuationCompensation）            ║
 ╠══════════════════════════════════════════════════════════════╣
 ║ 用法:                                                        ║
 ║   .\FontXnaBuilder.ps1 [参数]                                ║
