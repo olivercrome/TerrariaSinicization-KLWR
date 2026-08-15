@@ -48,7 +48,8 @@
       "fontFile": "Mouse_Text.fnt",
       "txtFile": "Mouse_Text.txt",
       "description": "鼠标提示文字字体",
-      "charInfoFile": "./FontInfo/Mouse_Text.txt"
+      "charInfoFile": "./FontInfo/Mouse_Text.txt",
+      "monoDigitWidth": -1"
     }
   },
   "conversion": {

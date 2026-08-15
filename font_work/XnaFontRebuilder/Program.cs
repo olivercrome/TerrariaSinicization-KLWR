@@ -21,7 +21,7 @@ class Program
                 if (args.Length < 2)
                 {
                     Console.WriteLine("Usage: XnaFontRebuilder --convert <input.fnt> [output.txt] [options]");
-                    Console.WriteLine("Options: --line-height <value>, --ascii-extra-spacing <value>, --character-spacing-compensation <value>, --digit-compensation <value>");
+                    Console.WriteLine("Options: --line-height <value>, --latin-compensation <value>, --char-spacing <value>, --digit-compensation <value>, --mono-digit-width <value>");
                     return 1;
                 }
 
@@ -81,6 +81,24 @@ class Program
             : ParseInt(commonElement.Attribute("lineHeight"), "common.lineHeight");
         int declaredCharCount = ParseInt(charsElement.Attribute("count"), "chars.count");
 
+        // 计算数字等宽的统一宽度（如果需要）
+        float monoDigitWidth = options.MonoDigitWidth;
+        if (monoDigitWidth == -1) // -1 表示自动取最大值
+        {
+            int maxAdvance = 0;
+            foreach (var charElement in charElements)
+            {
+                int id = ParseInt(charElement.Attribute("id"), "char.id");
+                if (id >= 48 && id <= 57) // 数字 0-9
+                {
+                    int xAdvance = ParseInt(charElement.Attribute("xadvance"), "char.xadvance");
+                    if (xAdvance > maxAdvance)
+                        maxAdvance = xAdvance;
+                }
+            }
+            monoDigitWidth = maxAdvance;
+        }
+
         using var output = new FileStream(options.OutputPath, FileMode.Create, FileAccess.Write, FileShare.None);
         using var writer = new BinaryWriter(output);
 
@@ -89,7 +107,7 @@ class Program
 
         foreach (var charElement in charElements)
         {
-            WriteGlyphRecord(writer, charElement, options.AsciiExtraSpacing, options.CharacterSpacingCompensation, options.DigitCompensation);
+            WriteGlyphRecord(writer, charElement, options.AsciiExtraSpacing, options.CharacterSpacingCompensation, options.DigitCompensation, monoDigitWidth);
         }
 
         writer.Write(lineHeight);
@@ -99,33 +117,47 @@ class Program
         writer.Write((byte)0);
     }
 
-    static void WriteGlyphRecord(BinaryWriter writer, XElement charElement, float asciiExtraSpacing, float characterSpacingCompensation, float digitCompensation)
+    static void WriteGlyphRecord(BinaryWriter writer, XElement charElement, float asciiExtraSpacing, float characterSpacingCompensation, float digitCompensation, float monoDigitWidth)
     {
         int id = ParseInt(charElement.Attribute("id"), "char.id");
         int x = ParseInt(charElement.Attribute("x"), "char.x");
         int y = ParseInt(charElement.Attribute("y"), "char.y");
         int width = ParseInt(charElement.Attribute("width"), "char.width");
         int height = ParseInt(charElement.Attribute("height"), "char.height");
-        float xOffset = ParseFloat(charElement.Attribute("xoffset"), "char.xoffset");
+        float originalXOffset = ParseFloat(charElement.Attribute("xoffset"), "char.xoffset");
         int yOffset = ParseInt(charElement.Attribute("yoffset"), "char.yoffset");
-        int xAdvance = ParseInt(charElement.Attribute("xadvance"), "char.xadvance");
+        int originalXAdvance = ParseInt(charElement.Attribute("xadvance"), "char.xadvance");
         byte page = ParseByte(charElement.Attribute("page"), "char.page");
+
+        float xOffset = originalXOffset;
+        int xAdvance = originalXAdvance;
 
         // 全局字符间距补偿
         xAdvance = (int)(xAdvance + characterSpacingCompensation);
 
-        // ASCII 字符（含数字）的额外间距补偿
+        // ASCII 额外间距补偿
         if (id >= 33 && id <= 127)
         {
             xAdvance = (int)(xAdvance + (2f * asciiExtraSpacing));
             xOffset += asciiExtraSpacing;
         }
 
-        // 数字字符专用额外补偿（解决数字太窄被遮挡问题）
-        if (id >= 48 && id <= 57)
+        // 数字等宽处理
+        if (id >= 48 && id <= 57 && monoDigitWidth > 0)
         {
-            xAdvance = (int)(xAdvance + digitCompensation);
-            xOffset += digitCompensation / 2f; // 使字形居中
+            float uniformAdvance = monoDigitWidth + digitCompensation;
+            xAdvance = (int)uniformAdvance;
+            // 居中：重新计算 xOffset 使字形居中
+            xOffset = (uniformAdvance - width) / 2f;
+        }
+        else
+        {
+            // 非等宽数字，只应用额外补偿
+            if (id >= 48 && id <= 57)
+            {
+                xAdvance = (int)(xAdvance + digitCompensation);
+                xOffset += digitCompensation / 2f;
+            }
         }
 
         writer.Write(x);
@@ -157,6 +189,7 @@ class Program
         float asciiExtraSpacing = 0f;
         float characterSpacingCompensation = 0f;
         float digitCompensation = 0f;
+        float monoDigitWidth = 0f;   // 0 表示不启用，-1 表示自动，正数表示固定宽度
 
         var remaining = args.Skip(1).ToList();
         bool outputSet = false;
@@ -202,6 +235,12 @@ class Program
                             throw new ArgumentException("--digit-compensation requires a value.");
                         digitCompensation = float.Parse(remaining[++i], CultureInfo.InvariantCulture);
                         break;
+                    case "--mono-digit-width":
+                    case "--monoDigitWidth":
+                        if (i + 1 >= remaining.Count)
+                            throw new ArgumentException("--mono-digit-width requires a value.");
+                        monoDigitWidth = float.Parse(remaining[++i], CultureInfo.InvariantCulture);
+                        break;
                     default:
                         throw new ArgumentException($"Unknown argument: {arg}");
                 }
@@ -229,6 +268,10 @@ class Program
                 {
                     digitCompensation = float.Parse(arg, CultureInfo.InvariantCulture);
                 }
+                else if (monoDigitWidth == 0f)
+                {
+                    monoDigitWidth = float.Parse(arg, CultureInfo.InvariantCulture);
+                }
                 else
                 {
                     throw new ArgumentException("Too many positional arguments.");
@@ -236,7 +279,7 @@ class Program
             }
         }
 
-        return new BaseConversionOptions(inputPath, outputPath, lineHeightOverride, asciiExtraSpacing, characterSpacingCompensation, digitCompensation);
+        return new BaseConversionOptions(inputPath, outputPath, lineHeightOverride, asciiExtraSpacing, characterSpacingCompensation, digitCompensation, monoDigitWidth);
     }
     #endregion
 
@@ -416,7 +459,8 @@ class Program
     {
         Console.WriteLine("Usage:");
         Console.WriteLine("  XnaFontRebuilder --convert <input.fnt> [output.txt] [options]");
-        Console.WriteLine("    Options: --line-height <value>, --ascii-extra-spacing <value>, --character-spacing-compensation <value>, --digit-compensation <value>");
+        Console.WriteLine("    Options: --line-height <value>, --latin-compensation <value>, --char-spacing <value>, --digit-compensation <value>, --mono-digit-width <value>");
+        Console.WriteLine("             mono-digit-width: 0=disable, -1=auto(max digit width), >0=use fixed width");
         Console.WriteLine("  XnaFontRebuilder --build-cfg-auto <input.bin> <output.cfg> <fontPath>");
     }
     #endregion
@@ -428,7 +472,8 @@ internal sealed record BaseConversionOptions(
     int LineHeightOverride,
     float AsciiExtraSpacing,
     float CharacterSpacingCompensation,
-    float DigitCompensation
+    float DigitCompensation,
+    float MonoDigitWidth
 );
 
 struct GlyphRecord

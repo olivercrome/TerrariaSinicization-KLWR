@@ -43,19 +43,26 @@ foreach ($fontName in $Config.fonts.PSObject.Properties.Name) {
         $fontDigitCompensation = [float]$fontData.digitCompensation
     }
 
+    # 读取该字体自己的 monoDigitWidth（如果配置了）
+    $fontMonoDigitWidth = $null
+    if ($fontData.PSObject.Properties.Name -contains 'monoDigitWidth') {
+        $fontMonoDigitWidth = [float]$fontData.monoDigitWidth
+    }
+
     $fontConfigs[$fontName] = @{
-        ConfigFile          = $normalizedConfigFile
-        OutputDir           = $fontData.outputDir
-        FontFile            = $fontData.fontFile
-        TxtFile             = $fontData.txtFile
-        Description         = $fontData.description
-        CharInfoFile        = $fontData.charInfoFile
-        SourceFont          = if ($fontData.PSObject.Properties.Name -contains 'sourceFont') {
-                                  $fontData.sourceFont
-                              } else {
-                                  $null
-                              }
-        DigitCompensation   = $fontDigitCompensation
+        ConfigFile        = $normalizedConfigFile
+        OutputDir         = $fontData.outputDir
+        FontFile          = $fontData.fontFile
+        TxtFile           = $fontData.txtFile
+        Description       = $fontData.description
+        CharInfoFile      = $fontData.charInfoFile
+        SourceFont        = if ($fontData.PSObject.Properties.Name -contains 'sourceFont') {
+                                $fontData.sourceFont
+                            } else {
+                                $null
+                            }
+        DigitCompensation = $fontDigitCompensation
+        MonoDigitWidth    = $fontMonoDigitWidth
     }
 }
 
@@ -69,6 +76,11 @@ $LatinCompensation = $Config.conversion.latinCompensation
 $CharSpacing = $Config.conversion.charSpacing
 $DigitCompensation = if ($Config.conversion.PSObject.Properties.Name -contains 'digitCompensation') {
     [float]$Config.conversion.digitCompensation
+} else {
+    0
+}
+$MonoDigitWidth = if ($Config.conversion.PSObject.Properties.Name -contains 'monoDigitWidth') {
+    [float]$Config.conversion.monoDigitWidth
 } else {
     0
 }
@@ -224,21 +236,27 @@ function Generate-Font {
     
     Write-Host "  [2/3] 转换为 TXT 格式..." -ForegroundColor Yellow
     try {
-        # 决定该字体使用哪个数字补偿值
+        # 决定该字体使用哪个数字补偿值和等宽宽度
         $actualDigitComp = if ($null -ne $FontConfig.DigitCompensation) {
             $FontConfig.DigitCompensation
         } else {
             $DigitCompensation
         }
+        $actualMonoWidth = if ($null -ne $FontConfig.MonoDigitWidth) {
+            $FontConfig.MonoDigitWidth
+        } else {
+            $MonoDigitWidth
+        }
 
         dotnet $XnaFontRebuilder --convert $fontPath $txtPath `
             --latin-compensation $LatinCompensation `
             --char-spacing $CharSpacing `
-            --digit-compensation $actualDigitComp
+            --digit-compensation $actualDigitComp `
+            --mono-digit-width $actualMonoWidth
         
         if ($LASTEXITCODE -ne 0) { throw "格式转换失败，退出代码: $LASTEXITCODE" }
         if (-not (FileExists $txtPath)) { throw "未找到生成的 .txt 文件" }
-        Write-Host "    ✓ 转换成功（数字补偿: $actualDigitComp）" -ForegroundColor Green
+        Write-Host "    ✓ 转换成功（数字补偿: $actualDigitComp, 等宽宽度: $actualMonoWidth）" -ForegroundColor Green
     } catch {
         Write-Host "    ✗ 失败: $_" -ForegroundColor Red
         return $false
@@ -282,7 +300,8 @@ function Show-Help {
 ║ 功能: 从 FontInfo 目录的字符信息文件生成字体                 ║
 ║       自动生成配置文件 -> 调用 BMFont -> 转换为 XNA 格式     ║
 ║       支持每个字体独立指定源字体（config.json 中 sourceFont）║
-║       支持每个字体独立指定数字补偿值（digitCompensation）    ║
+║       支持每个字体独立指定数字补偿（digitCompensation）      ║
+║       支持每个字体独立指定数字等宽（monoDigitWidth）         ║
 ╠══════════════════════════════════════════════════════════════╣
 ║ 用法:                                                        ║
 ║   .\FontXnaBuilder.ps1 [参数]                                ║
