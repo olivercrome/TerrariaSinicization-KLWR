@@ -180,18 +180,30 @@ jobs:
     # ============================================================
     - name: 📤 Commit & push 官方更新到 Localization / 害人汉化
       shell: pwsh
-      env:
-        GIT_COMMITTER_NAME: github-actions[bot]
-        GIT_COMMITTER_EMAIL: 41898282+github-actions[bot]@users.noreply.github.com
       run: |
+        # git 需要显式 identity 才能 commit；配成 github-actions bot（自定义提交者）
+        git config user.name  "github-actions[bot]"
+        git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+        # 先把 -build 补进 Localization/（含害人汉化/）的官方原文原样 staging
         git add "Localization/"
-        if (git diff --cached --quiet) {
+
+        # 没有任何新补缺(改动为空)就直接退出，不产生空提交
+        if (git diff --cached --quiet --exit-code) {
           Write-Host "Localization/ 无改动(-build 未补入新条目)，跳过提交。"
           exit 0
         }
+
         $branch = "${{ github.ref_name }}"
+
+        # 本地 commit：先确保后台上游有更新也能被 rebase 进(需先 commit，不能留未提交改动挡 rebase)
         git commit -m "🧹 以官方 zh-Hans 更新 Localization 与 害人汉化(缺失 key 仅补官方原文占位,待自制)"
-        git pull --rebase origin $branch 2>&1 | Out-Host
+
+        # rebase 到远端最新，避免 push 因他人(或上一轮)先推送而冲突
+        git fetch origin $branch
+        git rebase origin/$branch
+
+        # 推回
         git push "https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git" "HEAD:$branch"
         Write-Host "✅ 官方更新已推送回 $branch"
 
