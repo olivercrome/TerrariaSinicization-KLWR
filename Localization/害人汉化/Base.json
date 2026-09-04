@@ -421,7 +421,19 @@
     "PainterDecor": "绘画作品",
     "PeddlersSatchelUsed": "旅商自此将给你带来更多的东西！",
     "PumpkinMoonScore": "南瓜月嘎嘣没了！（得分：{0})",
-    "FrostMoonScore": "霜月嘎嘣没了！（得分：{0})"
+    "FrostMoonScore": "霜月嘎嘣没了！（得分：{0})",
+    "ItemLoadoutShareHint": "按 <share> 在不同配装间共享",
+    "ItemLoadoutShareHint2": "按 <share> 在不同配装间共享",
+    "ItemLoadoutShared": "与其他配装共享",
+    "ItemLoadoutSharedFrom": "共享自配装{0}",
+    "ToggleClassicGrid": "制作窗口样式",
+    "PanControlMode": "向前缩放",
+    "PanControlMode_OnAlways": "始终开启",
+    "PanControlMode_OffAlways": "始终关闭",
+    "PanControlMode_Click": "点击切换",
+    "PanControlMode_Hold": "按住使用",
+    "LookAheadGamepadInstruction": "缩放",
+    "Digtoise": "碎岩龟"
   },
   "CaptureBiomeChoice": {
     "0": "自动",
@@ -568,7 +580,8 @@
     "CannotTeleportToPylonBecauseNotEnoughNPCsAtCurrentPylon": "你在僵尸村庄里！",
     "CannotTeleportToPylonBecauseThereIsDanger": "把劫掠打完再说！",
     "CannotTeleportToPylonBecauseNotMeetingBiomeRequirements": "晶塔在异世界(对于晶塔而言)！",
-    "CannotTeleportToPylonBecauseAccessingLihzahrdTempleEarly": "神庙的力量，小子，滚出去！"
+    "CannotTeleportToPylonBecauseAccessingLihzahrdTempleEarly": "神庙的力量，小子，滚出去！",
+    "SteamHostOnlyAllowsFriends": "只有房主的Steam好友才能进入此服务器"
   },
   "GameUI": {
     "Storm": "凋零风暴",
@@ -707,7 +720,8 @@
     "CraftingWindowClassic": "关闭经典合成窗口",
     "CraftingWindowClassicTip": "关闭经典合成窗口\n按住shift时制作十次\n{InputTrigger_InteractWithTileUI}切换样式",
     "CraftingWindowTip": "关闭新版合成窗口\n按住shift时制作十次\n{InputTrigger_InteractWithTileUI}切换样式",
-    "ScreenShake": "屏幕震动:{0}"
+    "ScreenShake": "屏幕震动:{0}",
+    "NotEnoughMaterials": "材料不足"
   },
   "Controls": {
     "LeftClick": "右键",
@@ -953,7 +967,8 @@
     "Suffocated": "{0}给沙子砸死了。",
     "Burned": "{0}无法把火扑灭。",
     "Electrocuted": "{0}没有意识到网瘾的危害。",
-    "WasLicked": "{0}被舔了。"
+    "WasLicked": "{0}被舔了。",
+    "Spored": "{0}感染孢子而死"
   },
   "Misc": {
     "ForceWaterSettling": "迫使流水停止。",
@@ -1000,7 +1015,8 @@
     "Gold": "金",
     "Silver": "银",
     "Copper": "铜",
-    "DefenderMedals": "护卫奖章"
+    "DefenderMedals": "护卫奖章",
+    "DefenderMedals_PriceText": "护卫奖章"
   },
   "Achievements": {
     "ChallengerCategory": "挑战者",
@@ -3829,6 +3845,8 @@
     "endlessChristmas": "圣诞树下有什么……(圣诞节活动永远存在)",
     "vampirism": "你需要SPF9000。(玩家变为吸血鬼，无论如何请不要接触太阳)",
     "teamBasedSpawns": "别踏进我们的地盘！(你的重生点将根据你加入的队伍改变)",
-    "dualDungeons": "地牢买一送一！(几乎所有群系将被两座巨大的地牢有序排列)"
+    "dualDungeons": "地牢买一送一！(几乎所有群系将被两座巨大的地牢有序排列)",
+    "moreLightning": "宙斯不悦（更多雷击）",
+    "noLightning": "宙斯息怒了（禁用雷击）"
   }
 }

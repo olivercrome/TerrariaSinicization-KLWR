@@ -33,7 +33,9 @@
   "AppleArcade": {
     "NotSignedIn": "未登录游戏中心账号。请登录并连接你的游戏中心账号以使用在线功能。",
     "Underaged": "为保护儿童隐私，此 Game Center 账号被限制使用 WiFi 多人联机，你仍可以游玩其他游戏模式。",
-    "NoMultiplayerPermisssions": "你的账号权限不允许你加入多人游戏会话"
+    "NoMultiplayerPermisssions": "你的账号权限不允许你加入多人游戏会话",
+    "FailedSync": "本地存档数据无法与云端同步。请再次选择并重试。",
+    "ReloadSync": "本地存档数据正在与云端同步。请返回主菜单重新加载。"
   },
   "Mobile": {
     "MaxPlayers": "最大玩家数：",
@@ -886,7 +888,50 @@
     "DashModeTitle": "左右键冲刺：",
     "ArmorSetAbilityModeTitle": "按下键触发套装技能：",
     "Online": "互联网",
-    "Local": "局域网"
+    "Local": "局域网",
+    "PlayerPlayedTime": "{0}:{1}:{2}",
+    "TooltipSwitchAmmoConsole": "按 [cm:14] 切换弹药使用模式",
+    "TooltipSwitchAmmoKM": "右键按切换弹药使用模式",
+    "TooltipSwitchAmmoTouch": "点击 [transform] 切换弹药使用模式",
+    "TooltipShareConsole": "按 [cm:24]",
+    "TooltipShareKM": "按 [km:28]",
+    "TooltipShareTouch": "点击 [share]",
+    "TooltipMountConsole": "按 [cm:20]",
+    "TooltipMountKM": "按 [km:24]",
+    "TooltipMountTouch": "点击 [mount]",
+    "TooltipHealConsole": "按 [cm:21]",
+    "TooltipHealKM": "按 [km:25]",
+    "TooltipHealTouch": "点击 [heal]",
+    "TooltipManaConsole": "按 [cm:22]",
+    "TooltipManaKM": "按 [km:26]",
+    "TooltipManaTouch": "点击 [mana]",
+    "TooltipBuffConsole": "按 [cm:23]",
+    "TooltipBuffKM": "按 [km:27]",
+    "TooltipBuffTouch": "点击 [buff]",
+    "TooltipDigtoiseRecallConsole": "按 [cm:4] 收回碎岩龟",
+    "TooltipDigtoiseRecallKM": "按 [km:7] 收回碎岩龟",
+    "TooltipDigtoiseRecallTouch": "点击 [digtoiserecall] 收回碎岩龟",
+    "TooltipDigtoisePetConsole": "按 [cm:4] 摸摸它！",
+    "TooltipDigtoisePetKM": "按 [km:7] 摸摸它！",
+    "TooltipDigtoisePetTouch": "点击 [digtoisepet] 摸摸它！",
+    "VisionOSControllerDisconnected": "游玩本游戏需连接手柄，请连接手柄继续……",
+    "CrossplayDescriptionForcedUPnP": "玩家可通过局域网在任意平台加入此会话，如果你开启了 UPnP 路由，玩家也可通过服务器加入。",
+    "CrossplayDescriptionOnUPnP": "玩家可通过局域网在任意平台加入此会话，如果你开启了 UPnP 路由，玩家也可通过服务器加入。",
+    "RemoteServerSessionID": "通过邀请码 [col:FF77DD]{0}[/col] 邀请他人加入此跨平台会话。",
+    "ChestCraftToggle": "切换宝箱制作",
+    "ReturnToMainMenu": "返回主菜单",
+    "ShareButton": "分享",
+    "UnshareButton": "不分享",
+    "ScopePanModeTitle": "瞄变焦准模式：",
+    "RespawnSkipTouch": "点击跳过",
+    "RespawnSkipController": "按 [col:FFFFFF][cb:1][/col] 跳过",
+    "RespawnSkipMouseKeyboard": "按 [km:6] 跳过",
+    "CrossplayInviteEnterTitle": "邀请码：",
+    "CrossplayInviteEnterEmpty": "输入邀请码……",
+    "NoGameToJoinIPDisabled": "等待好友创建会话……",
+    "NoGameToJoin": "加入服务器或等待好友创建会话……",
+    "MultiplayerSettingsCategory": "多人模式",
+    "NewServerEntryWorldName": "加入服务器获取世界信息……"
   },
   "ProfileName": {
     "Profile1": "全屏",
@@ -1508,7 +1553,9 @@
     "LoadoutCycle": "循环装备配置",
     "TakeOne": "拿走一个",
     "Dash": "冲刺",
-    "ArmorSetAbility": "套装技能"
+    "ArmorSetAbility": "套装技能",
+    "ShareItem": "切换装备分享",
+    "ChestCraftToggle": "切换宝箱制作"
   },
   "KeyboardMappings": {
     "MovementAxis_X_0": "向左移动",
@@ -1797,7 +1844,8 @@
     "MouseCursor": "鼠标",
     "MouseWheel": "鼠标滚轮",
     "Drag": "左键单击并拖动",
-    "DoubleClick": "双击"
+    "DoubleClick": "双击",
+    "AltMouse0": "Alt 键 & 左键"
   },
   "AlternateLoadingTips": {
     "1": "高级玩家如果希望重新映射其按钮，可以在“设置”中进行此更改。",
@@ -1851,5 +1899,22 @@
     "LocalMultiplayer": "在本地多人游戏中",
     "OnlineMultiplayer": "在在线多人游戏中",
     "CrossplayMultiplayer": "在跨平台多人游戏中"
+  },
+  "AgeVerification": {
+    "Supervised_Denied_Google": "{$AgeVerification.Supervised_Denied}",
+    "Supervised_Pending_Google": "{$AgeVerification.Supervised_Pending}",
+    "Supervised_Underaged_Google": "{$AgeVerification.Supervised_Underaged}",
+    "Supervised_Denied_Amazon": "{$AgeVerification.Supervised_Denied}",
+    "Supervised_Pending_Amazon": "{$AgeVerification.Supervised_Pending}",
+    "Supervised_Underaged_Amazon": "{$AgeVerification.Supervised_Underaged}",
+    "Supervised_Denied_Apple": "{$AgeVerification.Supervised_Denied}",
+    "Supervised_Pending_Apple": "{$AgeVerification.Supervised_Pending}",
+    "Supervised_Underaged_Apple": "{$AgeVerification.Supervised_Underaged}",
+    "Supervised_Denied_Samsung": "{$AgeVerification.Supervised_Denied}",
+    "Supervised_Pending_Samsung": "{$AgeVerification.Supervised_Pending}",
+    "Supervised_Underaged_Samsung": "{$AgeVerification.Supervised_Underaged}",
+    "Supervised_Denied": "你的监护人不允许使用此账号游玩《泰拉瑞亚》。",
+    "Supervised_Pending": "你的账号正在等待监护人授权游玩《泰拉瑞亚》。",
+    "Supervised_Underaged": "你的账号不满足游玩《泰拉瑞亚》的年龄要求。"
   }
 }

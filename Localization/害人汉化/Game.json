@@ -1039,7 +1039,19 @@
     "CoffinMinecartRight": "{$BuffName.MinecartRight}",
     "CoffinMinecartLeft": "{$BuffName.MinecartLeft}",
     "DiggingMoleMinecartRight": "鼹鼠矿车",
-    "DiggingMoleMinecartLeft": "鼹鼠矿车"
+    "DiggingMoleMinecartLeft": "鼹鼠矿车",
+    "PalworldMinionTrustyFoxsparks": "可靠的火绒狐",
+    "PalworldMinionTrustyCattiva": "可靠的捣蛋猫",
+    "PalworldMountTrustyChillet": "可靠的疾旋鼬",
+    "PalworldMountTrustyChilletIgnis": "可靠的疾旋火鼬",
+    "PotentAcid": "烈性酸液",
+    "ManaHeat": "魔力涌动",
+    "ClayPotMinion": "黏土蓓蕾",
+    "ChlorophyteSpore": "孢子侵染",
+    "AcceleratePoisons": "加速负面效果",
+    "ForbiddenMinion": "禁戒遗迹",
+    "BlueLightning": "电击",
+    "RedLightning": "电击"
   },
   "BuffDescription": {
     "ObsidianSkin": "危 狱石 危",
@@ -1392,7 +1404,20 @@
     "MinecartRightMech": "我们一起坐矿车",
     "MinecartRightWood": "我们一起坐矿车",
     "DiggingMoleMinecartLeft": "鼹鼠矿车将为你挖掘",
-    "DiggingMoleMinecartRight": "鼹鼠矿车将为你挖掘"
+    "DiggingMoleMinecartRight": "鼹鼠矿车将为你挖掘",
+    "PalworldMinionTrustyFoxsparks": "火绒狐将为你而战",
+    "PalworldMinionTrustyCattiva": "捣蛋猫将为你而战",
+    "PalworldMountTrustyChillet": "疾旋鼬将陪你一起探索\n它跑起来相当威猛！",
+    "PalworldMountTrustyChilletIgnis": "疾旋火鼬将陪你一起探索\n小心别抚摸它太长时间，否则火花将会开始飞舞！",
+    "PotentAcid": "正在损失生命值",
+    "ManaHeat": "魔法伤害提高",
+    "ManaSickness2": "无法再使用魔力恢复物品",
+    "ClayPotMinion": "黏土蓓蕾将为你而战",
+    "ChlorophyteSpore": "正在损失生命值",
+    "AcceleratePoisons": "增强中毒效果",
+    "ForbiddenMinion": "禁戒遗迹将为你而战",
+    "BlueLightning": "你感到一阵刺痛",
+    "RedLightning": "你感到一阵刺痛"
   },
   "ArmorSetBonus": {
     "SquireTier3": "+1哨兵栏\n增强弩车:\n+50%攻速\n你受伤时弩车进入5秒速射模式:\n+100%攻速\n穿透7个敌人",
