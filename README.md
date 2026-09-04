@@ -57,6 +57,12 @@ UnpackTerrariaTextAsset/
 
 > 💡 每次构建还会额外生成并上传一个 `original-zh-Hans-json` 压缩包，里面是**解包原始 data.unity3d 得到的官方原始中文 (zh-Hans) 语言文件**（JSON），可随包一起在 Artifacts 下载区拿取。
 
+> 🔁 **官方 zh-Hans 自动更新 Localization / 害人汉化**：每次打包时，`-build` 步骤都会在
+> `Localization/*.json` 与 `Localization/害人汉化/*.json` 里，把**原版官方中文(zh-Hans)有、而这里缺失的
+> key** 以「只补不删、绝不覆盖已有自制译名」的方式**就地补缺**（补进去的是**官方原文占位**，非自制译名）；
+> 随后工作流会把这份更新 `git commit && push` 回当前分支（使用自带 `GITHUB_TOKEN`，官方机制可避免由此再次
+> 触发自身循环）。你 `git pull` 拉取后即可看到新增条目，再把官方原文继续制成你自己的译名提交即可。
+
 <br />
 
 ## 📱 修改 Terraria 安装包

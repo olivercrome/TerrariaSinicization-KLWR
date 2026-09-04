@@ -17,7 +17,10 @@ on:
 jobs:
   build:
     runs-on: windows-latest
-    
+    permissions:
+      contents: write
+      actions: read
+
     steps:
     - name: Checkout repository
       uses: actions/checkout@v6
@@ -167,7 +170,31 @@ jobs:
         Write-Host "Running command..."
         dotnet UnpackTerrariaTextAsset.dll -build "${{ steps.paths.outputs.BUNDLE_PATH }}" "${{ steps.paths.outputs.LOCALIZATION_PATH }}" "${{ steps.paths.outputs.FONT_WORK_PATH }}" "${{ steps.paths.outputs.OUTPUT_PATH }}"
         Write-Host "Command completed"
-    
+
+    # ============================================================
+    # 📤 官方 zh-Hans 更新 Localization/ 与 害人汉化/ 的 json —— 随每次打包跑一次
+    #   -build 已在第0步对上面两个目录做「官方新增条目回写」(深度递归·只补不删·
+    #     保留已有自制译名,只把缺失 key 用官方原文补齐),这里只是把它们 diff 提交并 push
+    #     回仓库,方便你拉取后把官方新增继续制成汉化。
+    #   · 只想产物不回写仓库时,删除此 step 与顶部的 contents: write 即可。
+    # ============================================================
+    - name: 📤 Commit & push 官方更新到 Localization / 害人汉化
+      shell: pwsh
+      env:
+        GIT_COMMITTER_NAME: github-actions[bot]
+        GIT_COMMITTER_EMAIL: 41898282+github-actions[bot]@users.noreply.github.com
+      run: |
+        git add "Localization/"
+        if (git diff --cached --quiet) {
+          Write-Host "Localization/ 无改动(-build 未补入新条目)，跳过提交。"
+          exit 0
+        }
+        $branch = "${{ github.ref_name }}"
+        git commit -m "🧹 以官方 zh-Hans 更新 Localization 与 害人汉化(缺失 key 仅补官方原文占位,待自制)"
+        git pull --rebase origin $branch 2>&1 | Out-Host
+        git push "https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git" "HEAD:$branch"
+        Write-Host "✅ 官方更新已推送回 $branch"
+
     - name: Debug - Check output
       run: |
         Write-Host "Current directory: $(Get-Location)"

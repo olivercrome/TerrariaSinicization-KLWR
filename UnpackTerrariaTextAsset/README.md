@@ -6,12 +6,13 @@
 
 - 导出 Unity AssetBundle 中的 TextAsset 和 Texture2D 资源
 - 导入修改后的 TextAsset 和 Texture2D 资源到 Unity AssetBundle
-- 自定义本地化替换（使用自定义翻译文件替换 en-US 资源，并将原 en-US 资源替换到 fr-FR）
-- 差异同步（-diff 命令，用于更新本地化文件，添加新内容、删除过时内容）
+- 本地化/多语言替换（-localize，用 Localization/ 覆盖 en-US、zh-Hans，用其下害人汉化/覆盖德语；并把原 zh-Hans/en-US 备份到 ja-JP/fr-FR）
+- 抽取原版官方中文（-extractzh，从原版 data.unity3d 导出官方 zh-Hans JSON 供审校/沿用）
+- 差异同步（-diff，对比游戏更新后的 zh-Hans 与本地化 JSON，**深度递归·只补不删·绝不覆盖已有自制译名**地把缺失条目补进 Localization/，并生成 Markdown 人工校对报告）
 - 支持纹理资源的导入导出（PNG 格式），使用 UABEA 同款解码算法保证清晰度
 - 支持 LZ4 压缩的 AssetBundle
 - 字体替换（-replacefonts 命令，使用自定义字体纹理替换游戏中的字体）
-- 汉化+字体一键构建（-build 命令，同时执行汉化和字体替换）
+- 汉化+字体一键构建（-build，第 0 步即做官方差异更新补齐 Localization/ 与害人汉化/，再完成本地化覆盖与字体替换）
 
 ## 系统要求
 
@@ -65,9 +66,9 @@ UnpackTerrariaTextAsset.exe -import <原data.unity3d路径> <输出文件路径>
 - 文件名格式通常为：`{资源名}-{assets文件名}-{路径ID}.扩展名`
 - 支持导入 TextAsset（.json 等）和 Texture2D（.png）资源
 
-### 3. 自定义本地化替换
+### 3. 本地化覆盖
 
-使用自定义的翻译文件替换 en-US 资源，并将原始 en-US 资源替换到 fr-FR：
+用 `Localization/` 里的自制汉化替换包内语言资源（en-US / zh-Hans），并做多语言备份；若路径下含 `害人汉化/` 子目录，则用其中顶层 json 覆盖德语资源：
 
 ```bash
 UnpackTerrariaTextAsset.exe -localize <data.unity3d路径> <本地化文件夹路径> <输出文件路径>
@@ -87,10 +88,13 @@ localization/
 ```
 
 **此命令会：**
-1. 用 localization 文件夹中的文件替换所有 en-US 开头的资源
-2. 将替换前的原始 en-US 资源复制到 fr-FR 开头的资源
-3. 修改所有语言资源中的语言显示名称
-4. 重新打包并压缩
+1. 把包内官方 zh-Hans 原中文备份到 ja-JP（多语言备份）
+2. 把原版 **en-US 备份到 fr-FR**（覆盖原法语前先留下英文原档）
+3. 用 Localization/ 的 `*.json` 按 category 覆盖 **en-US** 与 **zh-Hans** 资源
+4. 用 Localization/害人汉化/ 相同 category 的 json 覆盖德语（de / de-DE）资源
+5. 重新打包并压缩
+
+> 语言显示名（Language 字段）改写当前在代码里为**停用**状态，不会改动界面上显示的语言列表名。
 
 **注意**：文件名匹配不依赖路径 ID，而是通过资源名称中的分类部分进行匹配。
 
@@ -106,18 +110,22 @@ UnpackTerrariaTextAsset.exe -extractzh <原版data.unity3d路径> <输出文件�
 
 ### 5. 差异同步
 
-从游戏更新后的 zh-Hans 语言文件与 localization 文件夹进行对比，自动添加新内容、删除过时内容：
+从游戏更新后的原版 zh-Hans 语言文件与本地化文件夹对比，把自制汉化里**缺失的官方条目**补进去（方便官汉更新后你再次自制）：
 
 ```bash
 UnpackTerrariaTextAsset.exe -diff <data.unity3d路径> <本地化文件夹路径>
 ```
 
-**此命令会：**
-1. 读取 data.unity3d 中的 zh-Hans 语言文件
-2. 与 localization 文件夹中的对应文件进行对比
-3. 添加 zh-Hans 中有但 localization 中没有的新内容
-4. 删除 localization 中有但 zh-Hans 中没有的过时内容
-5. 保存更新后的 localization 文件
+**此命令会（与 -build 第 0 步共用同一套底层逻辑）：**
+1. 读取 data.unity3d 中解包出来的官方 zh-Hans 语言文件（须是未改写过的原版 bundle）
+2. 与传入的本地化文件夹（普通 Localization/ 的 `*.json`）同名 category 逐层对比
+3. **只补不删**：官方 zh-Hans 有、而本地化缺失的 key 用**官方原文**补充进去（缺失的文件整份新建）
+4. **绝不覆盖**：本地化里已有的条目一律保留，即使官方同步出现过也不覆盖自制译名
+5. 每当确有补缺时会生成一份 `output/diff-sync-report/diff-sync-report.md` 人工校对清单
+   （逐条列出被补入官方原文的 key 路径，供你在翻译后回填到对应 json，并把清单项 `[ ]` 勾成 `[x]`）
+6. 补入的官方原文需**人工校对后替换成你自己的译名**再提交
+
+> 💡 说明：本工具内嵌的差异同步是「**官方 → 自制**」方向的单向补充，不会因官方删词而删你的词，也不会把你已翻译好的内容打回原文。`-diff` 只处理传入的本地化文件夹（普通 Localization/）；对 `Localization/害人汉化/` 顶层同名 json 的同样补缺，则在 `-build`（见第 7 节第 0 步）里一并完成——只会改其顶层同名 category 底件，绝不触碰 模组A/模组B。
 
 ### 6. 字体替换
 
@@ -134,19 +142,21 @@ UnpackTerrariaTextAsset.exe -replacefonts <data.unity3d路径> <font_work文件�
 
 ### 7. 汉化+字体一键构建
 
-同时执行本地化替换和字体替换：
+同时执行本地化/害人汉化覆盖、官方 zh-Hans 差异更新与字体替换：
 
 ```bash
-UnpackTerrariaTextAsset.exe -build <data.unity3d路径> <本地化文件夹路径> <font_work文件夹路径> <输出文件路径>
+UnpackTerrariaTextAsset.exe -build <原版data.unity3d路径> <本地化文件夹路径> <font_work文件夹路径> <输出文件路径>
 ```
 
-**此命令会：**
-1. 用 localization 文件夹中的文件替换所有 en-US 开头的资源
-2. 将替换前的原始 en-US 资源复制到 fr-FR 开头的资源
-3. 修改所有语言资源中的语言显示名称
-4. 读取 font_work 文件夹中的字体纹理和配置文件
-5. 替换游戏中对应的字体资源
-6. 重新打包并压缩
+**此命令会（按序）：**
+1. **第 0 步 · 官方差异更新**：对普通 `Localization/` 与其中的 `害人汉化/` 顶层 json 做「只补不删」补缺
+   （把官方 zh-Hans 有、自制汉化缺的 key 就地写回，遇补缺还会生成上述 `.md` 人工校对报告；不改 modA/modB）
+2. 把原版官方 **zh-Hans 备份成 ja-JP**、把原版 **en-US 备份成 fr-FR**（作多语言备份）
+3. 用 `Localization/*.json` 覆盖 **en-US 与 zh-Hans**；（害人汉化子目录的相同文件名 json 用于覆盖德语 de/de-DE 资源）
+4. 读取 font_work 里各字体的纹理/描述文件，替换 Item_Stack / Combat_Crit / Combat_Text / Death_Text / Mouse_Text 等字体资源
+5. 重新打包并压缩输出到指定文件
+
+> 说到底是「一键把 自制汉化 + 新官汉补缺 + 配套字体 组装进原版 data.unity3d」。
 
 ## 项目结构
 
