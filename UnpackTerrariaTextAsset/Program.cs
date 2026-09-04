@@ -23,6 +23,11 @@ class Program
             HandleLocalize(arg);
         }
 
+        if (arguments.TryGetValue("-extractzh", out arg))
+        {
+            HandleExtractZh(arg);
+        }
+
         if (arguments.TryGetValue("-diff", out arg))
         {
             HandleDiff(arg);
@@ -114,6 +119,31 @@ class Program
         });
 
         Console.WriteLine($"本地化完成！输出文件: {outputPath}");
+    }
+
+    private static void HandleExtractZh(string args)
+    {
+        var parts = args.Split(' ');
+        if (parts.Length < 2)
+        {
+            Console.WriteLine("-extractzh 参数格式错误！");
+            Console.WriteLine("正确用法: -extractzh <原版data.unity3d路径> <输出文件夹路径>");
+            return;
+        }
+
+        var bundlePath = parts[0];
+        var outputDir = parts[1];
+
+        if (!File.Exists(bundlePath))
+        {
+            Console.WriteLine($"未找到文件: {bundlePath}");
+            return;
+        }
+
+        var unpack = new UnpackBundle();
+        unpack.OpenFiles(bundlePath);
+        unpack.ExtractOriginalZhHans(outputDir);
+        Console.WriteLine($"原始中文 (zh-Hans) 抽取完成！输出目录: {outputDir}");
     }
 
     private static void HandleDiff(string args)
@@ -211,6 +241,12 @@ class Program
         // 传入两个路径：原汉化文件夹（用于en-US/zh-Hans）和害人汉化子文件夹（用于de-DE）
         ProcessAndSaveBundle(bundlePath, outputPath, unpack =>
         {
+            // 第0步：差异自愈——先拿 bundle 里原版官方中文与 Localization/*.json 做深度递归"只补不删"同步，
+            //        把自制汉化缺失的官方新增条目原地补进 Localization/{Category}.json，
+            //        再往下做覆盖替换与换字体。自制汉化已有译名永远最高优先、不被覆盖。
+            Console.WriteLine("第0步：差异同步（用原版官方中文补齐 Localization 缺失条目）");
+            unpack.DiffAndSyncLocalization(localizationFolder);
+
             unpack.BatchLocalizationReplace(
                 localizationFolder,
                 Path.Combine(localizationFolder, "害人汉化")
@@ -218,7 +254,7 @@ class Program
             unpack.BatchReplaceFonts(fontWorkFolder);
         });
 
-        Console.WriteLine($"本地化和字体替换完成！输出文件: {outputPath}");
+        Console.WriteLine($"差异同步、本地化和字体替换完成！输出文件: {outputPath}");
     }
 
     private static void ProcessAndSaveBundle(string bundlePath, string outputPath, Action<UnpackBundle> processAction)

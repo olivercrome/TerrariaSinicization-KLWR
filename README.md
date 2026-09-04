@@ -55,6 +55,8 @@ UnpackTerrariaTextAsset/
 3. 在页面底部的 **Artifacts** 区域找到 `localized-data-unity3d`
 4. 点击下载即可获得汉化后的 `data.unity3d`
 
+> 💡 每次构建还会额外生成并上传一个 `original-zh-Hans-json` 压缩包，里面是**解包原始 data.unity3d 得到的官方原始中文 (zh-Hans) 语言文件**（JSON），可随包一起在 Artifacts 下载区拿取。
+
 <br />
 
 ## 📱 修改 Terraria 安装包

@@ -126,6 +126,39 @@ jobs:
       run: |
         New-Item -ItemType Directory -Force -Path "${{ steps.paths.outputs.OUTPUT_DIR }}"
     
+    # ============================================================
+    # 🌐 新增：抽取原版 data.unity3d 自带的原始中文 (zh-Hans) 语言文件
+    #      （须在 -build 覆盖汉化前，对未修改的原版 bundle 操作）
+    # ============================================================
+    - name: Extract original zh-Hans language files
+      run: |
+        $exeDir = Join-Path "${{ steps.paths.outputs.ROOT_DIR }}" "UnpackTerrariaTextAsset\bin\Release\net8.0"
+        $zhOutDir = Join-Path "${{ steps.paths.outputs.OUTPUT_DIR }}" "original-zh-Hans"
+        cd $exeDir
+        Write-Host "抽取原始中文 (zh-Hans)..."
+        dotnet UnpackTerrariaTextAsset.dll -extractzh "${{ steps.paths.outputs.BUNDLE_PATH }}" "$zhOutDir"
+        Write-Host "Contents:"
+        Get-ChildItem -Recurse $zhOutDir
+
+    # ============================================================
+    # 📦 新增：把抽取到的原始中文 JSON 压缩成 zip（用于最后上传）
+    # ============================================================
+    - name: Package original zh-Hans into zip
+      shell: pwsh
+      run: |
+        $zhOutDir = Join-Path "${{ steps.paths.outputs.OUTPUT_DIR }}" "original-zh-Hans"
+        $zipPath = Join-Path "${{ steps.paths.outputs.OUTPUT_DIR }}" "original-zh-Hans.zip"
+        if (Test-Path $zhOutDir) {
+          $tempDir = Join-Path "${{ steps.paths.outputs.OUTPUT_DIR }}" "zip-content"
+          New-Item -ItemType Directory -Force -Path $tempDir | Out-Null
+          Copy-Item "$zhOutDir\*" $tempDir -Recurse
+          Compress-Archive -Path "$tempDir\*" -DestinationPath $zipPath -Force
+          Write-Host "打包完成: $zipPath"
+          Get-Item $zipPath | Select-Object Name, Length
+        } else {
+          Write-Host "##[warning]未找到 $zhOutDir，跳过打包"
+        }
+    
     - name: Localize and replace fonts
       run: |
         $exeDir = Join-Path "${{ steps.paths.outputs.ROOT_DIR }}" "UnpackTerrariaTextAsset\bin\Release\net8.0"
@@ -160,3 +193,10 @@ jobs:
         name: localized-data-unity3d
         path: ${{ steps.paths.outputs.OUTPUT_PATH }}
         if-no-files-found: error
+
+    - name: 📦 Upload original zh-Hans zip
+      uses: actions/upload-artifact@v7
+      with:
+        name: original-zh-Hans-json
+        path: ${{ steps.paths.outputs.OUTPUT_DIR }}/original-zh-Hans.zip
+        if-no-files-found: warn

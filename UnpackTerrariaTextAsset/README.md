@@ -94,7 +94,17 @@ localization/
 
 **注意**：文件名匹配不依赖路径 ID，而是通过资源名称中的分类部分进行匹配。
 
-### 4. 差异同步
+### 4. 抽取原版官方中文 (zh-Hans)
+
+从**未修改的原版** data.unity3d 中抽取其中自带的官方原始中文语言文件（JSON），方便审校/备份：
+
+```bash
+UnpackTerrariaTextAsset.exe -extractzh <原版data.unity3d路径> <输出文件夹路径>
+```
+
+**注意**：请在汉化覆盖前对未改过的原版 bundle 执行，才能拿到未被汉化覆盖的官方 zh-Hans。抽取后会得到类似 `zh-Hans.json`、`zh-Hans.Items.json` 等文件。
+
+### 5. 差异同步
 
 从游戏更新后的 zh-Hans 语言文件与 localization 文件夹进行对比，自动添加新内容、删除过时内容：
 
@@ -109,7 +119,7 @@ UnpackTerrariaTextAsset.exe -diff <data.unity3d路径> <本地化文件夹路径
 4. 删除 localization 中有但 zh-Hans 中没有的过时内容
 5. 保存更新后的 localization 文件
 
-### 5. 字体替换
+### 6. 字体替换
 
 使用 font_work 文件夹中的自定义字体纹理替换游戏中的字体：
 
@@ -122,7 +132,7 @@ UnpackTerrariaTextAsset.exe -replacefonts <data.unity3d路径> <font_work文件�
 2. 替换游戏中对应的字体资源
 3. 重新打包并压缩
 
-### 6. 汉化+字体一键构建
+### 7. 汉化+字体一键构建
 
 同时执行本地化替换和字体替换：
 

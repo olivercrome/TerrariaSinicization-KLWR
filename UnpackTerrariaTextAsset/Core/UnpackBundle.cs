@@ -192,6 +192,47 @@ public class UnpackBundle
         }
     }
 
+    /// <summary>
+    /// 抽取原版 bundle（未汉化前）里自带的官方原始中文 (zh-Hans) TextAsset，
+    /// 导出为独立 JSON 文件，方便后续审校/备份。
+    /// 注意：必须在任何 -localize / -build 覆盖之前，对未修改的原版 bundle 调用，
+    /// 才能拿到未被汉化覆盖的官方原始中文。
+    /// </summary>
+    public void ExtractOriginalZhHans(string outputDir)
+    {
+        Directory.CreateDirectory(outputDir);
+        int count = 0;
+
+        foreach (var (assetKey, cont) in LoadAssets)
+        {
+            var baseField = AssetWorkspace.GetBaseField(cont);
+            if (baseField == null) continue;
+            var mNameField = baseField["m_Name"];
+            if (mNameField == null || mNameField.IsDummy) continue;
+
+            var assetName = mNameField.AsString;
+            if (string.IsNullOrEmpty(assetName) || assetName.Contains("_comp")) continue;
+            if (cont.ClassId == 28) continue;              // 只抽文本资源
+            if (!assetName.StartsWith("zh-Hans")) continue; // 只要原版官方中文
+
+            var mScriptField = baseField["m_Script"];
+            if (mScriptField == null || mScriptField.IsDummy) continue;
+
+            byte[] byteData;
+            try { byteData = mScriptField.AsByteArray; }
+            catch { continue; }
+            if (byteData == null) continue;
+
+            string safeName = Utility.ReplaceInvalidPathChars(assetName);
+            string file = Path.Combine(outputDir, $"{safeName}.json");
+            File.WriteAllBytes(file, byteData);
+            Console.WriteLine($"抽取原始中文: {assetName} -> {file}");
+            count++;
+        }
+
+        Console.WriteLine($"抽取统计: {count} 个 zh-Hans 语言文件");
+    }
+
     public void BatchExport()
     {
         var dir = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, ExportDir);
@@ -719,20 +760,23 @@ public class UnpackBundle
             Console.WriteLine($"Created localization folder: {localizationFolder}");
         }
 
+        // 汇总统计：文件名 -> (added 补入条目数, sourceAsset 触发的资源名, created 是否新建文件)
+        var summary = new Dictionary<string, (int Added, string Source, bool Created)>();
+
         foreach (var (assetKey, cont) in LoadAssets)
         {
             var baseField = AssetWorkspace.GetBaseField(cont);
             if (baseField == null) continue;
-            
+
             var mNameField = baseField["m_Name"];
             if (mNameField == null || mNameField.IsDummy) continue;
-            
+
             var assetName = mNameField.AsString;
             if (string.IsNullOrEmpty(assetName)) continue;
-            
+
             var mScriptField = baseField["m_Script"];
             if (mScriptField == null || mScriptField.IsDummy) continue;
-            
+
             byte[]? byteData = null;
             try
             {
@@ -742,7 +786,7 @@ public class UnpackBundle
             {
                 continue;
             }
-            
+
             if (byteData == null) { continue; }
 
             if (assetName.StartsWith("zh-Hans"))
@@ -751,11 +795,56 @@ public class UnpackBundle
                 if (category != null)
                 {
                     var localizationFile = Path.Combine(localizationFolder, $"{category}.json");
-                    SyncJsonFiles(byteData, localizationFile, assetName);
+                    string fileName = Path.GetFileName(localizationFile);
+
+                    var result = SyncJsonFiles(byteData, localizationFile, assetName);
+
+                    // 叠加统计（同 category 多个 zh-Hans 资源时合并 added/created）
+                    if (summary.TryGetValue(fileName, out var prev))
+                    {
+                        summary[fileName] = (
+                            prev.Added + result.Added,
+                            result.Added > 0 ? assetName : prev.Source,
+                            prev.Created || result.Created
+                        );
+                    }
+                    else
+                    {
+                        summary[fileName] = (result.Added, assetName, result.Created);
+                    }
                 }
             }
         }
+
+        // 末尾打印整个差异同步的总汇总
+        int totalAdded = summary.Values.Sum(v => v.Added);
+        int totalFiles = summary.Count;
+        int createdFiles = summary.Values.Count(v => v.Created);
+        int addedFiles = summary.Values.Count(v => v.Added > 0 && !v.Created);
+        int unchangedFiles = summary.Values.Count(v => v.Added == 0 && !v.Created);
+
+        Console.WriteLine("");
+        Console.WriteLine("====== 差异同步统计（对比原版官方中文，深度递归·只补不删）======");
+        Console.WriteLine($"  涉及文件总数    : {totalFiles}");
+        Console.WriteLine($"  新建文件        : {createdFiles}");
+        Console.WriteLine($"  有新增条目(非新建): {addedFiles}");
+        Console.WriteLine($"  无变化文件      : {unchangedFiles}");
+        Console.WriteLine($"  累计补入条目     : {totalAdded}  （补入的均为官方原文，需后续人工校对翻译）");
+
+        if (summary.Count > 0)
+        {
+            Console.WriteLine("  各文件新增分布：");
+            foreach (var (fileName, stat) in summary)
+            {
+                string marker = stat.Created ? "新建" : (stat.Added > 0 ? "补入" : "无变化");
+                Console.WriteLine($"    - {fileName,-24} {marker,-6} +{stat.Added,-5}  (源自 {stat.Source})");
+            }
+        }
+        Console.WriteLine("================================================================");
     }
+
+    // 差异同步单文件结果
+    private record DiffSyncResult(int Added, bool Created);
 
     private string? ExtractCategoryFromZhHans(string assetName)
     {
@@ -781,7 +870,17 @@ public class UnpackBundle
         return null;
     }
 
-    private void SyncJsonFiles(byte[] zhHansData, string localizationFile, string assetName)
+    /// <summary>
+    /// 差异同步：仅当原版官方中文 (zh-Hans) 中出现了「自制汉化没有」的条目时，
+    /// 才把这些缺失条目自动补进本地化 JSON。
+    /// 特点：
+    ///   1) 深度递归：不只看顶层 key，内层对象/数组里的缺失子键也会逐层补齐；
+    ///   2) 只补不删：绝不因原版少了某 key 而删除本地化里已有的内容；
+    ///   3) 不覆盖：本地化里已存在的 key 一律保留（保留自制汉化已有译名），
+    ///      仅对缺失的 key 做 deep-copy 填充。
+    /// </summary>
+    /// <returns>差异同步结果：Added=本次补入 key 数(新建文件归 0，只算补入触发的新增 key)，Created=是否新建文件</returns>
+    private DiffSyncResult SyncJsonFiles(byte[] zhHansData, string localizationFile, string assetName)
     {
         try
         {
@@ -792,54 +891,68 @@ public class UnpackBundle
             {
                 File.WriteAllBytes(localizationFile, zhHansData);
                 Console.WriteLine($"Created {Path.GetFileName(localizationFile)} from {assetName}");
-                return;
+                return new DiffSyncResult(0, true);
             }
 
             string localizationJson = File.ReadAllText(localizationFile);
             var localizationObj = JObject.Parse(localizationJson);
 
             int addedCount = 0;
-            int removedCount = 0;
 
-            var keysToRemove = new List<string>();
-            
-            foreach (var prop in localizationObj.Properties())
-            {
-                if (zhHansObj[prop.Name] == null)
-                {
-                    keysToRemove.Add(prop.Name);
-                    removedCount++;
-                }
-            }
+            // 深度递归、只补不删地合并：源=原版 zh-Hans，目标=自制汉化
+            DeepMergeMissing(localizationObj, zhHansObj, ref addedCount);
 
-            foreach (var key in keysToRemove)
-            {
-                localizationObj.Remove(key);
-            }
-
-            foreach (var prop in zhHansObj.Properties())
-            {
-                if (localizationObj[prop.Name] == null)
-                {
-                    localizationObj[prop.Name] = prop.Value;
-                    addedCount++;
-                }
-            }
-
-            if (addedCount > 0 || removedCount > 0)
+            if (addedCount > 0)
             {
                 string outputJson = JsonConvert.SerializeObject(localizationObj, Formatting.Indented);
                 File.WriteAllText(localizationFile, outputJson);
-                Console.WriteLine($"Synced {assetName} -> {Path.GetFileName(localizationFile)}: +{addedCount}, -{removedCount}");
+                Console.WriteLine($"Synced {assetName} -> {Path.GetFileName(localizationFile)}: +{addedCount} missing entries added (kept existing)");
+                return new DiffSyncResult(addedCount, false);
             }
             else
             {
                 Console.WriteLine($"No changes for {Path.GetFileName(localizationFile)}");
+                return new DiffSyncResult(0, false);
             }
         }
         catch (Exception ex)
         {
             Console.WriteLine($"Error syncing {Path.GetFileName(localizationFile)}: {ex.Message}");
+            return new DiffSyncResult(0, false);
+        }
+    }
+
+    /// <summary>
+    /// 把 source 中「在 target 里缺失」的键深拷贝填入 target；已存在的键绝不覆盖，
+    /// 若该键两边都是对象则继续向下递归补齐缺失子键。只补不删、也不覆盖已有译名。
+    /// </summary>
+    /// <param name="target">自制汉化 JSON（会被就地补充）</param>
+    /// <param name="source">原版官方中文 JSON（只读基准）</param>
+    /// <param name="addedCount">引用计数，记录本次实际补入的 key 数量。</param>
+    private void DeepMergeMissing(JObject target, JObject source, ref int addedCount)
+    {
+        foreach (var prop in source.Properties())
+        {
+            string key = prop.Name;
+            JToken? sourceValue = prop.Value;
+            if (sourceValue == null) continue;
+
+            JToken? targetValue = target[key];
+
+            // 目标缺失：整体深拷贝补入（补的是整段子树，不再对子树逐个计数）
+            if (targetValue == null || targetValue.Type == JTokenType.Null)
+            {
+                target[key] = sourceValue.DeepClone();
+                addedCount++;
+                continue;
+            }
+
+            // 两边都是对象 → 递归深入补齐内层缺失子键（每个内层补入的 key 单独计数）
+            if (targetValue.Type == JTokenType.Object && sourceValue.Type == JTokenType.Object)
+            {
+                DeepMergeMissing((JObject)targetValue, (JObject)sourceValue, ref addedCount);
+            }
+            // 其余情况（标量/数组/两边类型不一致）：target 已存在，保留自制汉化的译名，不覆盖
         }
     }
 
