@@ -200,3 +200,10 @@ jobs:
         name: original-zh-Hans-json
         path: ${{ steps.paths.outputs.OUTPUT_DIR }}/original-zh-Hans.zip
         if-no-files-found: warn
+
+    - name: 📊 Upload diff-sync report (人工校对 Markdown 差分清单)
+      uses: actions/upload-artifact@v7
+      with:
+        name: diff-sync-report
+        path: ${{ steps.paths.outputs.OUTPUT_DIR }}/diff-sync-report/diff-sync-report.md
+        if-no-files-found: warn

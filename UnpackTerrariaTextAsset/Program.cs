@@ -243,9 +243,13 @@ class Program
         {
             // 第0步：差异自愈——先拿 bundle 里原版官方中文与 Localization/*.json 做深度递归"只补不删"同步，
             //        把自制汉化缺失的官方新增条目原地补进 Localization/{Category}.json，
-            //        再往下做覆盖替换与换字体。自制汉化已有译名永远最高优先、不被覆盖。
-            Console.WriteLine("第0步：差异同步（用原版官方中文补齐 Localization 缺失条目）");
-            unpack.DiffAndSyncLocalization(localizationFolder);
+            //        并对 Localization/害人汉化/ 下的同名 category 底件也独立做同样补缺。
+            //        自制汉化已有译名永远最高优先、不被覆盖。
+            Console.WriteLine("第0步：差异同步（用原版官方中文补齐 Localization + Localization/害人汉化 缺失条目）");
+            unpack.DiffAndSyncLocalization(
+                localizationFolder,
+                Path.Combine(localizationFolder, "害人汉化")
+            );
 
             unpack.BatchLocalizationReplace(
                 localizationFolder,

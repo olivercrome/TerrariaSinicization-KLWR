@@ -752,7 +752,12 @@ public class UnpackBundle
         catch { }
     }
 
-    public void DiffAndSyncLocalization(string localizationFolder)
+    /// <summary>
+    /// 差异同步（深度递归·只补不删）：用原版官方中文(zh-Hans)把自制汉化里缺失的 key 补上。
+    /// </summary>
+    /// <param name="localizationFolder">普通汉化文件夹（en-US/zh-Hans 用）</param>
+    /// <param name="hanhuaFolder">可选：害人汉化文件夹（含同名 category 底件 *.json），传入时也一并独立做同样补缺，缺失 key 补进其顶层底件</param>
+    public void DiffAndSyncLocalization(string localizationFolder, string? hanhuaFolder = null)
     {
         if (!Directory.Exists(localizationFolder))
         {
@@ -760,8 +765,73 @@ public class UnpackBundle
             Console.WriteLine($"Created localization folder: {localizationFolder}");
         }
 
-        // 汇总统计：文件名 -> (added 补入条目数, sourceAsset 触发的资源名, created 是否新建文件)
-        var summary = new Dictionary<string, (int Added, string Source, bool Created)>();
+        // 1) 普通汉化文件夹
+        var summary = SyncLocaleFolder(localizationFolder, "Localization");
+
+        // 2) 害人汉化文件夹（可选，独立同规整补缺其顶层同名 category 底件）
+        if (!string.IsNullOrWhiteSpace(hanhuaFolder) && Directory.Exists(hanhuaFolder))
+        {
+            Console.WriteLine("附加处理：对害人汉化顶层底件做同样的官方差异补缺(只补不删)…");
+            var hh = SyncLocaleFolder(hanhuaFolder, "害人汉化");
+            foreach (var (k, v) in hh)
+            {
+                summary["害人汉化/" + k] = v;
+            }
+        }
+
+        // 末尾打印整个差异同步的总汇总
+        int totalAdded = summary.Values.Sum(v => v.Added);
+        int totalFiles = summary.Count;
+        int createdFiles = summary.Values.Count(v => v.Created);
+        int addedFiles = summary.Values.Count(v => v.Added > 0 && !v.Created);
+        int unchangedFiles = summary.Values.Count(v => v.Added == 0 && !v.Created);
+        int totalAddedKeys = summary.Values.Sum(v => v.AddedKeys.Count);
+
+        Console.WriteLine("");
+        Console.WriteLine("====== 差异同步统计（对比原版官方中文，深度递归·只补不删）======");
+        Console.WriteLine($"  涉及文件总数    : {totalFiles}");
+        Console.WriteLine($"  新建文件        : {createdFiles}");
+        Console.WriteLine($"  有新增条目(非新建): {addedFiles}");
+        Console.WriteLine($"  无变化文件      : {unchangedFiles}");
+        Console.WriteLine($"  累计补入对象子树 : {totalAdded}");
+        Console.WriteLine($"  累计补入叶子路径 : {totalAddedKeys}  （补入的均为官方原文，需后续人工校对翻译）");
+
+        if (summary.Count > 0)
+        {
+            Console.WriteLine("  各文件新增分布：");
+            foreach (var (fileName, stat) in summary)
+            {
+                string marker = stat.Created ? "新建" : (stat.Added > 0 ? "补入" : "无变化");
+                Console.WriteLine($"    - {fileName,-24} {marker,-6} +{stat.Added,-5} (+{stat.AddedKeys.Count} key)  (源自 {stat.Source})");
+            }
+        }
+        Console.WriteLine("================================================================");
+
+        // 生成可留档的人工校对报告（仅当确有补缺时覆盖写文件）
+        if (totalAddedKeys > 0)
+        {
+            WriteDiffSyncReport(localizationFolder, summary);
+        }
+        else
+        {
+            Console.WriteLine("差异同步无任何补缺，未生成报告文件。");
+        }
+    }
+
+    /// <summary>
+    /// 对单个自制汉化文件夹做官方 zh-Hans 深度递归"只补不删"补缺。
+    /// 遍历 zh-Hans 资源，按 category 映射到 {folder}/{Category}.json 做 SyncJsonFiles。
+    /// 返回汇总（key 用裸文件名，调用方如需避开多文件夹同名可再对 key 加前缀）。
+    /// </summary>
+    private Dictionary<string, (int Added, string Source, bool Created, List<string> AddedKeys)> SyncLocaleFolder(string folder, string label)
+    {
+        if (!Directory.Exists(folder))
+        {
+            Directory.CreateDirectory(folder);
+            Console.WriteLine($"[{label}] 已创建目录: {folder}");
+        }
+
+        var result = new Dictionary<string, (int Added, string Source, bool Created, List<string> AddedKeys)>();
 
         foreach (var (assetKey, cont) in LoadAssets)
         {
@@ -794,57 +864,120 @@ public class UnpackBundle
                 var category = ExtractCategoryFromZhHans(assetName);
                 if (category != null)
                 {
-                    var localizationFile = Path.Combine(localizationFolder, $"{category}.json");
+                    var localizationFile = Path.Combine(folder, $"{category}.json");
                     string fileName = Path.GetFileName(localizationFile);
 
-                    var result = SyncJsonFiles(byteData, localizationFile, assetName);
+                    var r = SyncJsonFiles(byteData, localizationFile, assetName);
 
-                    // 叠加统计（同 category 多个 zh-Hans 资源时合并 added/created）
-                    if (summary.TryGetValue(fileName, out var prev))
+                    // 叠加统计（同 category 多个 zh-Hans 资源时合并 added/created/补路径）
+                    if (result.TryGetValue(fileName, out var prev))
                     {
-                        summary[fileName] = (
-                            prev.Added + result.Added,
-                            result.Added > 0 ? assetName : prev.Source,
-                            prev.Created || result.Created
+                        var mergedKeys = prev.AddedKeys;
+                        foreach (var k in r.AddedKeys)
+                            if (!mergedKeys.Contains(k))
+                                mergedKeys.Add(k);
+                        mergedKeys.Sort(StringComparer.Ordinal);
+
+                        result[fileName] = (
+                            prev.Added + r.Added,
+                            r.Added > 0 ? assetName : prev.Source,
+                            prev.Created || r.Created,
+                            mergedKeys
                         );
                     }
                     else
                     {
-                        summary[fileName] = (result.Added, assetName, result.Created);
+                        var keys = new List<string>(r.AddedKeys);
+                        keys.Sort(StringComparer.Ordinal);
+                        result[fileName] = (r.Added, assetName, r.Created, keys);
                     }
                 }
             }
         }
 
-        // 末尾打印整个差异同步的总汇总
-        int totalAdded = summary.Values.Sum(v => v.Added);
-        int totalFiles = summary.Count;
-        int createdFiles = summary.Values.Count(v => v.Created);
-        int addedFiles = summary.Values.Count(v => v.Added > 0 && !v.Created);
-        int unchangedFiles = summary.Values.Count(v => v.Added == 0 && !v.Created);
-
-        Console.WriteLine("");
-        Console.WriteLine("====== 差异同步统计（对比原版官方中文，深度递归·只补不删）======");
-        Console.WriteLine($"  涉及文件总数    : {totalFiles}");
-        Console.WriteLine($"  新建文件        : {createdFiles}");
-        Console.WriteLine($"  有新增条目(非新建): {addedFiles}");
-        Console.WriteLine($"  无变化文件      : {unchangedFiles}");
-        Console.WriteLine($"  累计补入条目     : {totalAdded}  （补入的均为官方原文，需后续人工校对翻译）");
-
-        if (summary.Count > 0)
-        {
-            Console.WriteLine("  各文件新增分布：");
-            foreach (var (fileName, stat) in summary)
-            {
-                string marker = stat.Created ? "新建" : (stat.Added > 0 ? "补入" : "无变化");
-                Console.WriteLine($"    - {fileName,-24} {marker,-6} +{stat.Added,-5}  (源自 {stat.Source})");
-            }
-        }
-        Console.WriteLine("================================================================");
+        return result;
     }
 
-    // 差异同步单文件结果
-    private record DiffSyncResult(int Added, bool Created);
+    /// <summary>
+    /// 把本次差异同步「每个 category 具体补进去的官方原文 key 路径」整理成一份便于
+    /// 人工逐条看 md 清单勾选校对翻译的 Markdown 报告，写到 localizationFolder 的父目录下
+    /// 独立子目录 output/diff-sync-report/，避免被按 Localization 语言文件做格式校验扫描。
+    /// </summary>
+    private void WriteDiffSyncReport(string localizationFolder,
+        Dictionary<string, (int Added, string Source, bool Created, List<string> AddedKeys)> summary)
+    {
+        try
+        {
+            string parent = Path.GetFullPath(Path.Combine(localizationFolder, ".."));
+            string reportDir = Path.Combine(parent, "output", "diff-sync-report");
+            Directory.CreateDirectory(reportDir);
+
+            // 文件名（category）-> 有序 key 路径
+            var entries = new List<(string FileName, string Source, List<string> Keys)>();
+            int totalPaths = 0;
+            foreach (var (fileName, stat) in summary)
+            {
+                // 仅列实际有逐 key 补缺、需要人工校对翻译的文件：
+                //   纯新建(直接把整份官方原样写入、AddedKeys 为空)不算"缺失待补"，跳过；
+                //   创建后又按 resource 逐 key 补上官方原文的、或普通补缺的(AddedKeys>0)才列出。
+                if (stat.AddedKeys.Count == 0) continue;
+                entries.Add((fileName, stat.Source, stat.AddedKeys));
+                totalPaths += stat.AddedKeys.Count;
+            }
+
+            if (entries.Count == 0)
+            {
+                Console.WriteLine("差异同步无任何可补缺 key（均为新建或既有已满），未生成报告文件。");
+                return;
+            }
+
+            // 按文件名(A->Z)排版，便于找对应 category
+            entries.Sort((a, b) => string.Compare(a.FileName, b.FileName, StringComparison.Ordinal));
+
+            var sb = new StringBuilder();
+            sb.AppendLine("# 差异同步 · 人工校对清单");
+            sb.AppendLine();
+            sb.AppendLine("> 本清单由 TerrariaSinicization UnpackTerrariaTextAsset 差异同步(深度递归·只补不删) 生成。");
+            sb.AppendLine($"> 生成时间(UTC)：{DateTime.UtcNow:yyyy-MM-dd HH:mm:ss}");
+            sb.AppendLine($"> 待补 key 总数：**{totalPaths}**");
+            sb.AppendLine($"> 涉及汉化文件数：**{entries.Count}**");
+            sb.AppendLine();
+            sb.AppendLine("下面每条是从原版官方中文(zh-Hans)补进你自制汉化 `Localization/*.json` 的**缺失 item 路径**，");
+            sb.AppendLine("写入的都是**官方原文**，需你逐条人工翻译/替换成正式译名。路径即该文件里的对象层级，可照录定位。");
+            sb.AppendLine();
+            sb.AppendLine("**使用方法**：每校对译完一条，把该项前面的 `[ ]` 改成 `[x]` 即可边看边勾。");
+            sb.AppendLine("全部 `[x]` 后，把译文填回 `Localization/{文件}.json` 对应位置即可（下次 build 会沿用，不再补这行为缺）。");
+            sb.AppendLine();
+
+            foreach (var (fileName, source, keys) in entries)
+            {
+                sb.AppendLine($"## `{fileName}`  — 缺失 {keys.Count} 条  (补来源: `{source}`)");
+                sb.AppendLine();
+                sb.AppendLine("| # | 需人工翻译/校对 的 key 路径 | 状态 |");
+                sb.AppendLine("|---|---------------------------|------|");
+                for (int i = 0; i < keys.Count; i++)
+                {
+                    // 状态列给 GFM 任务列表，便于在支持处勾选
+                    sb.AppendLine($"| {i + 1} | `{keys[i]}` | [ ] |");
+                }
+                sb.AppendLine();
+            }
+
+            sb.AppendLine("---");
+            sb.AppendLine("> 提示：本 md 仅为人工对照辅助，不会被游戏读取。正式译文请回填到 `Localization/` 下的对应 json 后再打 build。");
+
+            string outFile = Path.Combine(reportDir, "diff-sync-report.md");
+            File.WriteAllText(outFile, sb.ToString(), Encoding.UTF8);
+            Console.WriteLine($"已写出人工校对报告(.md): {outFile}");
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"写入差异同步报告失败: {ex.Message}");
+        }
+    }
+
+    // 差异同步单文件结果：Added=本次补入的对象子树数(顶层缺key标为1)，Created=是否新建文件，AddedKeys=本次被补入的全部叶子/路径
+    private record DiffSyncResult(int Added, bool Created, IReadOnlyList<string> AddedKeys);
 
     private string? ExtractCategoryFromZhHans(string assetName)
     {
@@ -879,7 +1012,7 @@ public class UnpackBundle
     ///   3) 不覆盖：本地化里已存在的 key 一律保留（保留自制汉化已有译名），
     ///      仅对缺失的 key 做 deep-copy 填充。
     /// </summary>
-    /// <returns>差异同步结果：Added=本次补入 key 数(新建文件归 0，只算补入触发的新增 key)，Created=是否新建文件</returns>
+    /// <returns>差异同步结果：Added=本次补入 key 数(新建文件归 0，只算补入触发的新增 key)，Created=是否新建文件，AddedKeys=被补入的全部叶子路径</returns>
     private DiffSyncResult SyncJsonFiles(byte[] zhHansData, string localizationFile, string assetName)
     {
         try
@@ -891,34 +1024,35 @@ public class UnpackBundle
             {
                 File.WriteAllBytes(localizationFile, zhHansData);
                 Console.WriteLine($"Created {Path.GetFileName(localizationFile)} from {assetName}");
-                return new DiffSyncResult(0, true);
+                return new DiffSyncResult(0, true, Array.Empty<string>());
             }
 
             string localizationJson = File.ReadAllText(localizationFile);
             var localizationObj = JObject.Parse(localizationJson);
 
             int addedCount = 0;
+            var addedKeys = new List<string>();
 
             // 深度递归、只补不删地合并：源=原版 zh-Hans，目标=自制汉化
-            DeepMergeMissing(localizationObj, zhHansObj, ref addedCount);
+            DeepMergeMissing(localizationObj, zhHansObj, "", ref addedCount, addedKeys);
 
             if (addedCount > 0)
             {
                 string outputJson = JsonConvert.SerializeObject(localizationObj, Formatting.Indented);
                 File.WriteAllText(localizationFile, outputJson);
                 Console.WriteLine($"Synced {assetName} -> {Path.GetFileName(localizationFile)}: +{addedCount} missing entries added (kept existing)");
-                return new DiffSyncResult(addedCount, false);
+                return new DiffSyncResult(addedCount, false, addedKeys);
             }
             else
             {
                 Console.WriteLine($"No changes for {Path.GetFileName(localizationFile)}");
-                return new DiffSyncResult(0, false);
+                return new DiffSyncResult(0, false, addedKeys);
             }
         }
         catch (Exception ex)
         {
             Console.WriteLine($"Error syncing {Path.GetFileName(localizationFile)}: {ex.Message}");
-            return new DiffSyncResult(0, false);
+            return new DiffSyncResult(0, false, Array.Empty<string>());
         }
     }
 
@@ -928,8 +1062,10 @@ public class UnpackBundle
     /// </summary>
     /// <param name="target">自制汉化 JSON（会被就地补充）</param>
     /// <param name="source">原版官方中文 JSON（只读基准）</param>
+    /// <param name="path">递归到当前对象的 JSON 路径前缀（形如 Root.SubObj 或空串表示根下第一层）</param>
     /// <param name="addedCount">引用计数，记录本次实际补入的 key 数量。</param>
-    private void DeepMergeMissing(JObject target, JObject source, ref int addedCount)
+    /// <param name="addedKeys">接收每个被补入 key 的完整 JSON 路径，用于生成人工校对用的差分报告。</param>
+    private void DeepMergeMissing(JObject target, JObject source, string path, ref int addedCount, List<string> addedKeys)
     {
         foreach (var prop in source.Properties())
         {
@@ -937,11 +1073,15 @@ public class UnpackBundle
             JToken? sourceValue = prop.Value;
             if (sourceValue == null) continue;
 
+            string fullPath = path.Length == 0 ? key : path + "." + key;
+
             JToken? targetValue = target[key];
 
             // 目标缺失：整体深拷贝补入（补的是整段子树，不再对子树逐个计数）
             if (targetValue == null || targetValue.Type == JTokenType.Null)
             {
+                // 若整段被补的就是一个对象子树，把子树内每个叶节点也展开记录为需人工校对项
+                AddSubtreeKeys(fullPath, sourceValue, addedKeys);
                 target[key] = sourceValue.DeepClone();
                 addedCount++;
                 continue;
@@ -950,9 +1090,36 @@ public class UnpackBundle
             // 两边都是对象 → 递归深入补齐内层缺失子键（每个内层补入的 key 单独计数）
             if (targetValue.Type == JTokenType.Object && sourceValue.Type == JTokenType.Object)
             {
-                DeepMergeMissing((JObject)targetValue, (JObject)sourceValue, ref addedCount);
+                DeepMergeMissing((JObject)targetValue, (JObject)sourceValue, fullPath, ref addedCount, addedKeys);
             }
             // 其余情况（标量/数组/两边类型不一致）：target 已存在，保留自制汉化的译名，不覆盖
+        }
+    }
+
+    /// <summary>
+    /// 把一个将要整体补入的对象子树展开为若干条"叶子路径"，逐条登记进 addedKeys，
+    /// 便于人工逐个照 path 去翻译校对（对象内部每个叶节点拆成一行，数组保持为数组下标路径）。
+    /// </summary>
+    private void AddSubtreeKeys(string path, JToken node, List<string> addedKeys)
+    {
+        if (node is JObject obj)
+        {
+            foreach (var p in obj.Properties())
+            {
+                AddSubtreeKeys(path + "." + p.Name, p.Value, addedKeys);
+            }
+        }
+        else if (node is JArray arr)
+        {
+            for (int i = 0; i < arr.Count; i++)
+            {
+                AddSubtreeKeys(path + "[" + i + "]", arr[i], addedKeys);
+            }
+        }
+        else
+        {
+            // 标量：整段缺失补充的落点（能落到文本都在这层记）
+            addedKeys.Add(path);
         }
     }
 
