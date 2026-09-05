@@ -964,7 +964,7 @@ public class UnpackBundle
             }
 
             sb.AppendLine("---");
-            sb.AppendLine("> 提示：本 md 仅为人工对照辅助，不会被游戏读取。正式译文请回填到 `Localization/` 下的对应 json 后再打 build。");
+            sb.AppendLine("> 提示：本 md 仅为人工对照辅助，不会被游戏读取。");
 
             string outFile = Path.Combine(reportDir, "diff-sync-report.md");
             File.WriteAllText(outFile, sb.ToString(), Encoding.UTF8);
@@ -1073,7 +1073,7 @@ public class UnpackBundle
             JToken? sourceValue = prop.Value;
             if (sourceValue == null) continue;
 
-            string fullPath = path.Length == 0 ? key : path + "." + key;
+            string fullPath = path.Length == 0 ? key : path + "-" + key;
 
             JToken? targetValue = target[key];
 
@@ -1106,7 +1106,8 @@ public class UnpackBundle
         {
             foreach (var p in obj.Properties())
             {
-                AddSubtreeKeys(path + "." + p.Name, p.Value, addedKeys);
+                string next = string.IsNullOrEmpty(path) ? p.Name : path + "-" + p.Name;
+                AddSubtreeKeys(next, p.Value, addedKeys);
             }
         }
         else if (node is JArray arr)
