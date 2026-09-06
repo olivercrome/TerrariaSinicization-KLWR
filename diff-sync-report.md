@@ -1,0 +1,563 @@
+﻿# 差异同步 · 人工校对清单
+
+> 本清单由 TerrariaSinicization UnpackTerrariaTextAsset 差异同步(深度递归·只补不删) 生成。
+> 生成时间(UTC)：2026-09-04 11:35:19
+> 待补 key 总数：**498**
+> 涉及汉化文件数：**10**
+
+下面每条是从原版官方中文(zh-Hans)补进你自制汉化 `Localization/*.json` 的**缺失 item 路径**，
+写入的都是**官方原文**，需你逐条人工翻译/替换成正式译名。路径即该文件里的对象层级，可照录定位。
+
+**使用方法**：每校对译完一条，把该项前面的 `[ ]` 改成 `[x]` 即可边看边勾。
+全部 `[x]` 后，把译文填回 `Localization/{文件}.json` 对应位置即可（下次 build 会沿用，不再补这行为缺）。
+
+## `Base.json`  — 缺失 33 条  (补来源: `zh-Hans`)
+
+| # | 需人工翻译/校对 的 key 路径 | 状态 |
+|---|---------------------------|------|
+| 1 | `Currency.DefenderMedals_PriceText` | [ ] |
+| 2 | `DeathText.Spored` | [ ] |
+| 3 | `GameUI.NotEnoughMaterials` | [ ] |
+| 4 | `Net.SteamHostOnlyAllowsFriends` | [ ] |
+| 5 | `SecretSeedDescription.moreLightning` | [ ] |
+| 6 | `SecretSeedDescription.noLightning` | [ ] |
+| 7 | `UI.ArmorSetAbility` | [ ] |
+| 8 | `UI.Dash` | [ ] |
+| 9 | `UI.Digtoise` | [ ] |
+| 10 | `UI.DoubleTapDash` | [ ] |
+| 11 | `UI.FlashyEffectsInterfaceOff` | [ ] |
+| 12 | `UI.FlashyEffectsInterfaceOn` | [ ] |
+| 13 | `UI.FlashyEffectsWorldOff` | [ ] |
+| 14 | `UI.FlashyEffectsWorldOn` | [ ] |
+| 15 | `UI.ItemLoadoutShareHint` | [ ] |
+| 16 | `UI.ItemLoadoutShareHint2` | [ ] |
+| 17 | `UI.ItemLoadoutShared` | [ ] |
+| 18 | `UI.ItemLoadoutSharedFrom` | [ ] |
+| 19 | `UI.LookAheadGamepadInstruction` | [ ] |
+| 20 | `UI.NextLoadout` | [ ] |
+| 21 | `UI.PanControlMode` | [ ] |
+| 22 | `UI.PanControlMode_Click` | [ ] |
+| 23 | `UI.PanControlMode_Hold` | [ ] |
+| 24 | `UI.PanControlMode_OffAlways` | [ ] |
+| 25 | `UI.PanControlMode_OnAlways` | [ ] |
+| 26 | `UI.PlayWhenUnfocusedOff` | [ ] |
+| 27 | `UI.PlayWhenUnfocusedOn` | [ ] |
+| 28 | `UI.PortraitsCloseUp` | [ ] |
+| 29 | `UI.PortraitsDetailed` | [ ] |
+| 30 | `UI.PortraitsDisabled` | [ ] |
+| 31 | `UI.PortraitsFullBody` | [ ] |
+| 32 | `UI.PreviousLoadout` | [ ] |
+| 33 | `UI.ToggleClassicGrid` | [ ] |
+
+## `Game.json`  — 缺失 25 条  (补来源: `zh-Hans.Game`)
+
+| # | 需人工翻译/校对 的 key 路径 | 状态 |
+|---|---------------------------|------|
+| 1 | `BuffDescription.AcceleratePoisons` | [ ] |
+| 2 | `BuffDescription.BlueLightning` | [ ] |
+| 3 | `BuffDescription.ChlorophyteSpore` | [ ] |
+| 4 | `BuffDescription.ClayPotMinion` | [ ] |
+| 5 | `BuffDescription.ForbiddenMinion` | [ ] |
+| 6 | `BuffDescription.ManaHeat` | [ ] |
+| 7 | `BuffDescription.ManaSickness2` | [ ] |
+| 8 | `BuffDescription.PalworldMinionTrustyCattiva` | [ ] |
+| 9 | `BuffDescription.PalworldMinionTrustyFoxsparks` | [ ] |
+| 10 | `BuffDescription.PalworldMountTrustyChillet` | [ ] |
+| 11 | `BuffDescription.PalworldMountTrustyChilletIgnis` | [ ] |
+| 12 | `BuffDescription.PotentAcid` | [ ] |
+| 13 | `BuffDescription.RedLightning` | [ ] |
+| 14 | `BuffName.AcceleratePoisons` | [ ] |
+| 15 | `BuffName.BlueLightning` | [ ] |
+| 16 | `BuffName.ChlorophyteSpore` | [ ] |
+| 17 | `BuffName.ClayPotMinion` | [ ] |
+| 18 | `BuffName.ForbiddenMinion` | [ ] |
+| 19 | `BuffName.ManaHeat` | [ ] |
+| 20 | `BuffName.PalworldMinionTrustyCattiva` | [ ] |
+| 21 | `BuffName.PalworldMinionTrustyFoxsparks` | [ ] |
+| 22 | `BuffName.PalworldMountTrustyChillet` | [ ] |
+| 23 | `BuffName.PalworldMountTrustyChilletIgnis` | [ ] |
+| 24 | `BuffName.PotentAcid` | [ ] |
+| 25 | `BuffName.RedLightning` | [ ] |
+
+## `Items.json`  — 缺失 110 条  (补来源: `zh-Hans.Items`)
+
+| # | 需人工翻译/校对 的 key 路径 | 状态 |
+|---|---------------------------|------|
+| 1 | `CommonItemTooltip.Buffs` | [ ] |
+| 2 | `CommonItemTooltip.GemEffectAmber` | [ ] |
+| 3 | `CommonItemTooltip.GemEffectAmethyst` | [ ] |
+| 4 | `CommonItemTooltip.GemEffectDiamond` | [ ] |
+| 5 | `CommonItemTooltip.GemEffectEmerald` | [ ] |
+| 6 | `CommonItemTooltip.GemEffectRuby` | [ ] |
+| 7 | `CommonItemTooltip.GemEffectSapphire` | [ ] |
+| 8 | `CommonItemTooltip.GemEffectTopaz` | [ ] |
+| 9 | `CommonItemTooltip.GemRobe` | [ ] |
+| 10 | `CommonItemTooltip.GemStaff` | [ ] |
+| 11 | `CommonItemTooltip.Healing` | [ ] |
+| 12 | `CommonItemTooltip.ManaHealing` | [ ] |
+| 13 | `CommonItemTooltip.Mount` | [ ] |
+| 14 | `CommonItemTooltip.WorkBench` | [ ] |
+| 15 | `ItemName.AmmoCycler4` | [ ] |
+| 16 | `ItemName.AmmoCyclerFullInv` | [ ] |
+| 17 | `ItemName.AmmoCyclerNoCycle` | [ ] |
+| 18 | `ItemName.AmmoCyclerRandom` | [ ] |
+| 19 | `ItemName.ArcSurge` | [ ] |
+| 20 | `ItemName.ArmletOfRuin` | [ ] |
+| 21 | `ItemName.BejeweledStaff` | [ ] |
+| 22 | `ItemName.CatalystBand` | [ ] |
+| 23 | `ItemName.ClayPotMinion` | [ ] |
+| 24 | `ItemName.CrossedHeartNecklace` | [ ] |
+| 25 | `ItemName.DaybloomStaff` | [ ] |
+| 26 | `ItemName.DruidicSerpentCloak` | [ ] |
+| 27 | `ItemName.ForbiddenMinion` | [ ] |
+| 28 | `ItemName.GiantTiki` | [ ] |
+| 29 | `ItemName.GlacierFang` | [ ] |
+| 30 | `ItemName.HarpyCharm` | [ ] |
+| 31 | `ItemName.HeavySling` | [ ] |
+| 32 | `ItemName.LightningStrike` | [ ] |
+| 33 | `ItemName.MobiusStrip` | [ ] |
+| 34 | `ItemName.MysticArtsSash` | [ ] |
+| 35 | `ItemName.OldStyleParkourBook` | [ ] |
+| 36 | `ItemName.OldStyleParkourBookInactive` | [ ] |
+| 37 | `ItemName.OuroborosRing` | [ ] |
+| 38 | `ItemName.PalworldKinshipPeach` | [ ] |
+| 39 | `ItemName.PalworldLittleKinshipPeach` | [ ] |
+| 40 | `ItemName.PalworldMinionTrustyCattiva` | [ ] |
+| 41 | `ItemName.PalworldMinionTrustyFoxsparks` | [ ] |
+| 42 | `ItemName.PalworldMountTrustyChillet` | [ ] |
+| 43 | `ItemName.PalworldMountTrustyChilletIgnis` | [ ] |
+| 44 | `ItemName.PalworldTrustyDigtoise` | [ ] |
+| 45 | `ItemName.Petalstorm` | [ ] |
+| 46 | `ItemName.PhoenixQuiver` | [ ] |
+| 47 | `ItemName.PoisonBarb` | [ ] |
+| 48 | `ItemName.Pyroclast` | [ ] |
+| 49 | `ItemName.RestorationShield` | [ ] |
+| 50 | `ItemName.RoyalGuardHarness` | [ ] |
+| 51 | `ItemName.ScoutSling` | [ ] |
+| 52 | `ItemName.SeraphNecklace` | [ ] |
+| 53 | `ItemName.SharpBarb` | [ ] |
+| 54 | `ItemName.SilverBracer` | [ ] |
+| 55 | `ItemName.SilverShield` | [ ] |
+| 56 | `ItemName.SnakeBand` | [ ] |
+| 57 | `ItemName.SnappingStone` | [ ] |
+| 58 | `ItemName.SweetBarb` | [ ] |
+| 59 | `ItemName.TemplarSling` | [ ] |
+| 60 | `ItemName.TimerCrit` | [ ] |
+| 61 | `ItemName.TwilightGrasp` | [ ] |
+| 62 | `ItemName.WickedArmlet` | [ ] |
+| 63 | `ItemName.WickedClaws` | [ ] |
+| 64 | `ItemTooltip.AmmoCycler4` | [ ] |
+| 65 | `ItemTooltip.AmmoCyclerFullInv` | [ ] |
+| 66 | `ItemTooltip.AmmoCyclerNoCycle` | [ ] |
+| 67 | `ItemTooltip.AmmoCyclerRandom` | [ ] |
+| 68 | `ItemTooltip.ArcSurge` | [ ] |
+| 69 | `ItemTooltip.ArmletOfRuin` | [ ] |
+| 70 | `ItemTooltip.BejeweledStaff` | [ ] |
+| 71 | `ItemTooltip.CatalystBand` | [ ] |
+| 72 | `ItemTooltip.ClayPotMinion` | [ ] |
+| 73 | `ItemTooltip.CrossedHeartNecklace` | [ ] |
+| 74 | `ItemTooltip.DaybloomStaff` | [ ] |
+| 75 | `ItemTooltip.DruidicSerpentCloak` | [ ] |
+| 76 | `ItemTooltip.ForbiddenMinion` | [ ] |
+| 77 | `ItemTooltip.GiantTiki` | [ ] |
+| 78 | `ItemTooltip.GlacierFang` | [ ] |
+| 79 | `ItemTooltip.HarpyCharm` | [ ] |
+| 80 | `ItemTooltip.HeavySling` | [ ] |
+| 81 | `ItemTooltip.LightningStrike` | [ ] |
+| 82 | `ItemTooltip.MobiusStrip` | [ ] |
+| 83 | `ItemTooltip.MysticArtsSash` | [ ] |
+| 84 | `ItemTooltip.OldStyleParkourBookInactive` | [ ] |
+| 85 | `ItemTooltip.OuroborosRing` | [ ] |
+| 86 | `ItemTooltip.PalworldKinshipPeach` | [ ] |
+| 87 | `ItemTooltip.PalworldLittleKinshipPeach` | [ ] |
+| 88 | `ItemTooltip.PalworldMinionTrustyCattiva` | [ ] |
+| 89 | `ItemTooltip.PalworldMinionTrustyFoxsparks` | [ ] |
+| 90 | `ItemTooltip.PalworldMountTrustyChillet` | [ ] |
+| 91 | `ItemTooltip.PalworldMountTrustyChilletIgnis` | [ ] |
+| 92 | `ItemTooltip.PalworldTrustyDigtoise` | [ ] |
+| 93 | `ItemTooltip.Petalstorm` | [ ] |
+| 94 | `ItemTooltip.PhoenixQuiver` | [ ] |
+| 95 | `ItemTooltip.PoisonBarb` | [ ] |
+| 96 | `ItemTooltip.Pyroclast` | [ ] |
+| 97 | `ItemTooltip.RestorationShield` | [ ] |
+| 98 | `ItemTooltip.RoyalGuardHarness` | [ ] |
+| 99 | `ItemTooltip.ScoutSling` | [ ] |
+| 100 | `ItemTooltip.SeraphNecklace` | [ ] |
+| 101 | `ItemTooltip.SilverBracer` | [ ] |
+| 102 | `ItemTooltip.SilverShield` | [ ] |
+| 103 | `ItemTooltip.SnakeBand` | [ ] |
+| 104 | `ItemTooltip.SnappingStone` | [ ] |
+| 105 | `ItemTooltip.SweetBarb` | [ ] |
+| 106 | `ItemTooltip.TemplarSling` | [ ] |
+| 107 | `ItemTooltip.TimerCrit` | [ ] |
+| 108 | `ItemTooltip.TwilightGrasp` | [ ] |
+| 109 | `ItemTooltip.WickedArmlet` | [ ] |
+| 110 | `ItemTooltip.WickedClaws` | [ ] |
+
+## `Mobile.json`  — 缺失 63 条  (补来源: `zh-Hans.Mobile`)
+
+| # | 需人工翻译/校对 的 key 路径 | 状态 |
+|---|---------------------------|------|
+| 1 | `AgeVerification.Supervised_Denied` | [ ] |
+| 2 | `AgeVerification.Supervised_Denied_Amazon` | [ ] |
+| 3 | `AgeVerification.Supervised_Denied_Apple` | [ ] |
+| 4 | `AgeVerification.Supervised_Denied_Google` | [ ] |
+| 5 | `AgeVerification.Supervised_Denied_Samsung` | [ ] |
+| 6 | `AgeVerification.Supervised_Pending` | [ ] |
+| 7 | `AgeVerification.Supervised_Pending_Amazon` | [ ] |
+| 8 | `AgeVerification.Supervised_Pending_Apple` | [ ] |
+| 9 | `AgeVerification.Supervised_Pending_Google` | [ ] |
+| 10 | `AgeVerification.Supervised_Pending_Samsung` | [ ] |
+| 11 | `AgeVerification.Supervised_Underaged` | [ ] |
+| 12 | `AgeVerification.Supervised_Underaged_Amazon` | [ ] |
+| 13 | `AgeVerification.Supervised_Underaged_Apple` | [ ] |
+| 14 | `AgeVerification.Supervised_Underaged_Google` | [ ] |
+| 15 | `AgeVerification.Supervised_Underaged_Samsung` | [ ] |
+| 16 | `AppleArcade.FailedSync` | [ ] |
+| 17 | `AppleArcade.ReloadSync` | [ ] |
+| 18 | `ControllerMappings.ChestCraftToggle` | [ ] |
+| 19 | `ControllerMappings.ShareItem` | [ ] |
+| 20 | `KeyboardBindings.AltMouse0` | [ ] |
+| 21 | `Mobile.ChestCraftToggle` | [ ] |
+| 22 | `Mobile.CrossplayDescriptionForcedUPnP` | [ ] |
+| 23 | `Mobile.CrossplayDescriptionOnUPnP` | [ ] |
+| 24 | `Mobile.CrossplayInviteEnterEmpty` | [ ] |
+| 25 | `Mobile.CrossplayInviteEnterTitle` | [ ] |
+| 26 | `Mobile.MultiplayerSettingsCategory` | [ ] |
+| 27 | `Mobile.NewServerEntryWorldName` | [ ] |
+| 28 | `Mobile.NoGameToJoin` | [ ] |
+| 29 | `Mobile.NoGameToJoinIPDisabled` | [ ] |
+| 30 | `Mobile.PlayerPlayedTime` | [ ] |
+| 31 | `Mobile.RemoteServerSessionID` | [ ] |
+| 32 | `Mobile.RespawnSkipController` | [ ] |
+| 33 | `Mobile.RespawnSkipMouseKeyboard` | [ ] |
+| 34 | `Mobile.RespawnSkipTouch` | [ ] |
+| 35 | `Mobile.ReturnToMainMenu` | [ ] |
+| 36 | `Mobile.ScopePanModeTitle` | [ ] |
+| 37 | `Mobile.ShareButton` | [ ] |
+| 38 | `Mobile.TooltipBuffConsole` | [ ] |
+| 39 | `Mobile.TooltipBuffKM` | [ ] |
+| 40 | `Mobile.TooltipBuffTouch` | [ ] |
+| 41 | `Mobile.TooltipDigtoisePetConsole` | [ ] |
+| 42 | `Mobile.TooltipDigtoisePetKM` | [ ] |
+| 43 | `Mobile.TooltipDigtoisePetTouch` | [ ] |
+| 44 | `Mobile.TooltipDigtoiseRecallConsole` | [ ] |
+| 45 | `Mobile.TooltipDigtoiseRecallKM` | [ ] |
+| 46 | `Mobile.TooltipDigtoiseRecallTouch` | [ ] |
+| 47 | `Mobile.TooltipHealConsole` | [ ] |
+| 48 | `Mobile.TooltipHealKM` | [ ] |
+| 49 | `Mobile.TooltipHealTouch` | [ ] |
+| 50 | `Mobile.TooltipManaConsole` | [ ] |
+| 51 | `Mobile.TooltipManaKM` | [ ] |
+| 52 | `Mobile.TooltipManaTouch` | [ ] |
+| 53 | `Mobile.TooltipMountConsole` | [ ] |
+| 54 | `Mobile.TooltipMountKM` | [ ] |
+| 55 | `Mobile.TooltipMountTouch` | [ ] |
+| 56 | `Mobile.TooltipShareConsole` | [ ] |
+| 57 | `Mobile.TooltipShareKM` | [ ] |
+| 58 | `Mobile.TooltipShareTouch` | [ ] |
+| 59 | `Mobile.TooltipSwitchAmmoConsole` | [ ] |
+| 60 | `Mobile.TooltipSwitchAmmoKM` | [ ] |
+| 61 | `Mobile.TooltipSwitchAmmoTouch` | [ ] |
+| 62 | `Mobile.UnshareButton` | [ ] |
+| 63 | `Mobile.VisionOSControllerDisconnected` | [ ] |
+
+## `Projectiles.json`  — 缺失 25 条  (补来源: `zh-Hans.Projectiles`)
+
+| # | 需人工翻译/校对 的 key 路径 | 状态 |
+|---|---------------------------|------|
+| 1 | `ProjectileName.ArcSurge` | [ ] |
+| 2 | `ProjectileName.BoneShard` | [ ] |
+| 3 | `ProjectileName.CascadeExplosion` | [ ] |
+| 4 | `ProjectileName.ChlorophyteClaymoreBlade` | [ ] |
+| 5 | `ProjectileName.ChlorophyteClaymoreBladeSlam` | [ ] |
+| 6 | `ProjectileName.ChlorophyteClaymoreSporeCloud` | [ ] |
+| 7 | `ProjectileName.ChlorophyteSaberStab` | [ ] |
+| 8 | `ProjectileName.ClayPotMinion` | [ ] |
+| 9 | `ProjectileName.CrystalShardMelee` | [ ] |
+| 10 | `ProjectileName.DaybloomStaffShot` | [ ] |
+| 11 | `ProjectileName.ForbiddenMinion` | [ ] |
+| 12 | `ProjectileName.ForbiddenMinionShot` | [ ] |
+| 13 | `ProjectileName.GlacierFangShot` | [ ] |
+| 14 | `ProjectileName.KrakenWave` | [ ] |
+| 15 | `ProjectileName.LightningStrikeShot` | [ ] |
+| 16 | `ProjectileName.MeleeBone` | [ ] |
+| 17 | `ProjectileName.PalworldMinionTrustyCattiva` | [ ] |
+| 18 | `ProjectileName.PalworldMinionTrustyFoxsparks` | [ ] |
+| 19 | `ProjectileName.PalworldTrustyDigtoise` | [ ] |
+| 20 | `ProjectileName.PetalstormShot` | [ ] |
+| 21 | `ProjectileName.SnakeBandStarCloakTinkerStar` | [ ] |
+| 22 | `ProjectileName.SnappingStoneEffect` | [ ] |
+| 23 | `ProjectileName.SnappingStoneMeleeEffect` | [ ] |
+| 24 | `ProjectileName.SnappingStoneSummonEffect` | [ ] |
+| 25 | `ProjectileName.TheEyeOfCthulhuDash` | [ ] |
+
+## `害人汉化/Base.json`  — 缺失 18 条  (补来源: `zh-Hans`)
+
+| # | 需人工翻译/校对 的 key 路径 | 状态 |
+|---|---------------------------|------|
+| 1 | `Currency.DefenderMedals_PriceText` | [ ] |
+| 2 | `DeathText.Spored` | [ ] |
+| 3 | `GameUI.NotEnoughMaterials` | [ ] |
+| 4 | `Net.SteamHostOnlyAllowsFriends` | [ ] |
+| 5 | `SecretSeedDescription.moreLightning` | [ ] |
+| 6 | `SecretSeedDescription.noLightning` | [ ] |
+| 7 | `UI.Digtoise` | [ ] |
+| 8 | `UI.ItemLoadoutShareHint` | [ ] |
+| 9 | `UI.ItemLoadoutShareHint2` | [ ] |
+| 10 | `UI.ItemLoadoutShared` | [ ] |
+| 11 | `UI.ItemLoadoutSharedFrom` | [ ] |
+| 12 | `UI.LookAheadGamepadInstruction` | [ ] |
+| 13 | `UI.PanControlMode` | [ ] |
+| 14 | `UI.PanControlMode_Click` | [ ] |
+| 15 | `UI.PanControlMode_Hold` | [ ] |
+| 16 | `UI.PanControlMode_OffAlways` | [ ] |
+| 17 | `UI.PanControlMode_OnAlways` | [ ] |
+| 18 | `UI.ToggleClassicGrid` | [ ] |
+
+## `害人汉化/Game.json`  — 缺失 25 条  (补来源: `zh-Hans.Game`)
+
+| # | 需人工翻译/校对 的 key 路径 | 状态 |
+|---|---------------------------|------|
+| 1 | `BuffDescription.AcceleratePoisons` | [ ] |
+| 2 | `BuffDescription.BlueLightning` | [ ] |
+| 3 | `BuffDescription.ChlorophyteSpore` | [ ] |
+| 4 | `BuffDescription.ClayPotMinion` | [ ] |
+| 5 | `BuffDescription.ForbiddenMinion` | [ ] |
+| 6 | `BuffDescription.ManaHeat` | [ ] |
+| 7 | `BuffDescription.ManaSickness2` | [ ] |
+| 8 | `BuffDescription.PalworldMinionTrustyCattiva` | [ ] |
+| 9 | `BuffDescription.PalworldMinionTrustyFoxsparks` | [ ] |
+| 10 | `BuffDescription.PalworldMountTrustyChillet` | [ ] |
+| 11 | `BuffDescription.PalworldMountTrustyChilletIgnis` | [ ] |
+| 12 | `BuffDescription.PotentAcid` | [ ] |
+| 13 | `BuffDescription.RedLightning` | [ ] |
+| 14 | `BuffName.AcceleratePoisons` | [ ] |
+| 15 | `BuffName.BlueLightning` | [ ] |
+| 16 | `BuffName.ChlorophyteSpore` | [ ] |
+| 17 | `BuffName.ClayPotMinion` | [ ] |
+| 18 | `BuffName.ForbiddenMinion` | [ ] |
+| 19 | `BuffName.ManaHeat` | [ ] |
+| 20 | `BuffName.PalworldMinionTrustyCattiva` | [ ] |
+| 21 | `BuffName.PalworldMinionTrustyFoxsparks` | [ ] |
+| 22 | `BuffName.PalworldMountTrustyChillet` | [ ] |
+| 23 | `BuffName.PalworldMountTrustyChilletIgnis` | [ ] |
+| 24 | `BuffName.PotentAcid` | [ ] |
+| 25 | `BuffName.RedLightning` | [ ] |
+
+## `害人汉化/Items.json`  — 缺失 111 条  (补来源: `zh-Hans.Items`)
+
+| # | 需人工翻译/校对 的 key 路径 | 状态 |
+|---|---------------------------|------|
+| 1 | `CommonItemTooltip.Buffs` | [ ] |
+| 2 | `CommonItemTooltip.GemEffectAmber` | [ ] |
+| 3 | `CommonItemTooltip.GemEffectAmethyst` | [ ] |
+| 4 | `CommonItemTooltip.GemEffectDiamond` | [ ] |
+| 5 | `CommonItemTooltip.GemEffectEmerald` | [ ] |
+| 6 | `CommonItemTooltip.GemEffectRuby` | [ ] |
+| 7 | `CommonItemTooltip.GemEffectSapphire` | [ ] |
+| 8 | `CommonItemTooltip.GemEffectTopaz` | [ ] |
+| 9 | `CommonItemTooltip.GemRobe` | [ ] |
+| 10 | `CommonItemTooltip.GemStaff` | [ ] |
+| 11 | `CommonItemTooltip.Healing` | [ ] |
+| 12 | `CommonItemTooltip.ManaHealing` | [ ] |
+| 13 | `CommonItemTooltip.Mount` | [ ] |
+| 14 | `CommonItemTooltip.WorkBench` | [ ] |
+| 15 | `ItemName.AmmoCycler4` | [ ] |
+| 16 | `ItemName.AmmoCyclerFullInv` | [ ] |
+| 17 | `ItemName.AmmoCyclerNoCycle` | [ ] |
+| 18 | `ItemName.AmmoCyclerRandom` | [ ] |
+| 19 | `ItemName.ArcSurge` | [ ] |
+| 20 | `ItemName.ArmletOfRuin` | [ ] |
+| 21 | `ItemName.BejeweledStaff` | [ ] |
+| 22 | `ItemName.CatalystBand` | [ ] |
+| 23 | `ItemName.ClayPotMinion` | [ ] |
+| 24 | `ItemName.CrossedHeartNecklace` | [ ] |
+| 25 | `ItemName.DaybloomStaff` | [ ] |
+| 26 | `ItemName.DruidicSerpentCloak` | [ ] |
+| 27 | `ItemName.ForbiddenMinion` | [ ] |
+| 28 | `ItemName.GiantTiki` | [ ] |
+| 29 | `ItemName.GlacierFang` | [ ] |
+| 30 | `ItemName.HarpyCharm` | [ ] |
+| 31 | `ItemName.HeavySling` | [ ] |
+| 32 | `ItemName.LightningStrike` | [ ] |
+| 33 | `ItemName.MobiusStrip` | [ ] |
+| 34 | `ItemName.MysticArtsSash` | [ ] |
+| 35 | `ItemName.OldStyleParkourBook` | [ ] |
+| 36 | `ItemName.OldStyleParkourBookInactive` | [ ] |
+| 37 | `ItemName.OuroborosRing` | [ ] |
+| 38 | `ItemName.PalworldKinshipPeach` | [ ] |
+| 39 | `ItemName.PalworldLittleKinshipPeach` | [ ] |
+| 40 | `ItemName.PalworldMinionTrustyCattiva` | [ ] |
+| 41 | `ItemName.PalworldMinionTrustyFoxsparks` | [ ] |
+| 42 | `ItemName.PalworldMountTrustyChillet` | [ ] |
+| 43 | `ItemName.PalworldMountTrustyChilletIgnis` | [ ] |
+| 44 | `ItemName.PalworldTrustyDigtoise` | [ ] |
+| 45 | `ItemName.Petalstorm` | [ ] |
+| 46 | `ItemName.PhoenixQuiver` | [ ] |
+| 47 | `ItemName.PoisonBarb` | [ ] |
+| 48 | `ItemName.Pyroclast` | [ ] |
+| 49 | `ItemName.RestorationShield` | [ ] |
+| 50 | `ItemName.RoyalGuardHarness` | [ ] |
+| 51 | `ItemName.ScoutSling` | [ ] |
+| 52 | `ItemName.SeraphNecklace` | [ ] |
+| 53 | `ItemName.SharpBarb` | [ ] |
+| 54 | `ItemName.SilverBracer` | [ ] |
+| 55 | `ItemName.SilverShield` | [ ] |
+| 56 | `ItemName.SnakeBand` | [ ] |
+| 57 | `ItemName.SnappingStone` | [ ] |
+| 58 | `ItemName.SweetBarb` | [ ] |
+| 59 | `ItemName.TemplarSling` | [ ] |
+| 60 | `ItemName.TimerCrit` | [ ] |
+| 61 | `ItemName.TwilightGrasp` | [ ] |
+| 62 | `ItemName.WickedArmlet` | [ ] |
+| 63 | `ItemName.WickedClaws` | [ ] |
+| 64 | `ItemTooltip.AmmoCycler4` | [ ] |
+| 65 | `ItemTooltip.AmmoCyclerFullInv` | [ ] |
+| 66 | `ItemTooltip.AmmoCyclerNoCycle` | [ ] |
+| 67 | `ItemTooltip.AmmoCyclerRandom` | [ ] |
+| 68 | `ItemTooltip.ArcSurge` | [ ] |
+| 69 | `ItemTooltip.ArmletOfRuin` | [ ] |
+| 70 | `ItemTooltip.BejeweledStaff` | [ ] |
+| 71 | `ItemTooltip.CatalystBand` | [ ] |
+| 72 | `ItemTooltip.ClayPotMinion` | [ ] |
+| 73 | `ItemTooltip.CrossedHeartNecklace` | [ ] |
+| 74 | `ItemTooltip.DaybloomStaff` | [ ] |
+| 75 | `ItemTooltip.DruidicSerpentCloak` | [ ] |
+| 76 | `ItemTooltip.ForbiddenMinion` | [ ] |
+| 77 | `ItemTooltip.GiantTiki` | [ ] |
+| 78 | `ItemTooltip.GlacierFang` | [ ] |
+| 79 | `ItemTooltip.HarpyCharm` | [ ] |
+| 80 | `ItemTooltip.HeavySling` | [ ] |
+| 81 | `ItemTooltip.LightningStrike` | [ ] |
+| 82 | `ItemTooltip.MobiusStrip` | [ ] |
+| 83 | `ItemTooltip.MysticArtsSash` | [ ] |
+| 84 | `ItemTooltip.OldStyleParkourBookInactive` | [ ] |
+| 85 | `ItemTooltip.OuroborosRing` | [ ] |
+| 86 | `ItemTooltip.PalworldKinshipPeach` | [ ] |
+| 87 | `ItemTooltip.PalworldLittleKinshipPeach` | [ ] |
+| 88 | `ItemTooltip.PalworldMinionTrustyCattiva` | [ ] |
+| 89 | `ItemTooltip.PalworldMinionTrustyFoxsparks` | [ ] |
+| 90 | `ItemTooltip.PalworldMountTrustyChillet` | [ ] |
+| 91 | `ItemTooltip.PalworldMountTrustyChilletIgnis` | [ ] |
+| 92 | `ItemTooltip.PalworldTrustyDigtoise` | [ ] |
+| 93 | `ItemTooltip.Petalstorm` | [ ] |
+| 94 | `ItemTooltip.PhoenixQuiver` | [ ] |
+| 95 | `ItemTooltip.PoisonBarb` | [ ] |
+| 96 | `ItemTooltip.Pyroclast` | [ ] |
+| 97 | `ItemTooltip.RestorationShield` | [ ] |
+| 98 | `ItemTooltip.RoyalGuardHarness` | [ ] |
+| 99 | `ItemTooltip.ScoutSling` | [ ] |
+| 100 | `ItemTooltip.SeraphNecklace` | [ ] |
+| 101 | `ItemTooltip.SilverBracer` | [ ] |
+| 102 | `ItemTooltip.SilverShield` | [ ] |
+| 103 | `ItemTooltip.SnakeBand` | [ ] |
+| 104 | `ItemTooltip.SnappingStone` | [ ] |
+| 105 | `ItemTooltip.SweetBarb` | [ ] |
+| 106 | `ItemTooltip.TemplarSling` | [ ] |
+| 107 | `ItemTooltip.TheEyeOfCthulhu` | [ ] |
+| 108 | `ItemTooltip.TimerCrit` | [ ] |
+| 109 | `ItemTooltip.TwilightGrasp` | [ ] |
+| 110 | `ItemTooltip.WickedArmlet` | [ ] |
+| 111 | `ItemTooltip.WickedClaws` | [ ] |
+
+## `害人汉化/Mobile.json`  — 缺失 63 条  (补来源: `zh-Hans.Mobile`)
+
+| # | 需人工翻译/校对 的 key 路径 | 状态 |
+|---|---------------------------|------|
+| 1 | `AgeVerification.Supervised_Denied` | [ ] |
+| 2 | `AgeVerification.Supervised_Denied_Amazon` | [ ] |
+| 3 | `AgeVerification.Supervised_Denied_Apple` | [ ] |
+| 4 | `AgeVerification.Supervised_Denied_Google` | [ ] |
+| 5 | `AgeVerification.Supervised_Denied_Samsung` | [ ] |
+| 6 | `AgeVerification.Supervised_Pending` | [ ] |
+| 7 | `AgeVerification.Supervised_Pending_Amazon` | [ ] |
+| 8 | `AgeVerification.Supervised_Pending_Apple` | [ ] |
+| 9 | `AgeVerification.Supervised_Pending_Google` | [ ] |
+| 10 | `AgeVerification.Supervised_Pending_Samsung` | [ ] |
+| 11 | `AgeVerification.Supervised_Underaged` | [ ] |
+| 12 | `AgeVerification.Supervised_Underaged_Amazon` | [ ] |
+| 13 | `AgeVerification.Supervised_Underaged_Apple` | [ ] |
+| 14 | `AgeVerification.Supervised_Underaged_Google` | [ ] |
+| 15 | `AgeVerification.Supervised_Underaged_Samsung` | [ ] |
+| 16 | `AppleArcade.FailedSync` | [ ] |
+| 17 | `AppleArcade.ReloadSync` | [ ] |
+| 18 | `ControllerMappings.ChestCraftToggle` | [ ] |
+| 19 | `ControllerMappings.ShareItem` | [ ] |
+| 20 | `KeyboardBindings.AltMouse0` | [ ] |
+| 21 | `Mobile.ChestCraftToggle` | [ ] |
+| 22 | `Mobile.CrossplayDescriptionForcedUPnP` | [ ] |
+| 23 | `Mobile.CrossplayDescriptionOnUPnP` | [ ] |
+| 24 | `Mobile.CrossplayInviteEnterEmpty` | [ ] |
+| 25 | `Mobile.CrossplayInviteEnterTitle` | [ ] |
+| 26 | `Mobile.MultiplayerSettingsCategory` | [ ] |
+| 27 | `Mobile.NewServerEntryWorldName` | [ ] |
+| 28 | `Mobile.NoGameToJoin` | [ ] |
+| 29 | `Mobile.NoGameToJoinIPDisabled` | [ ] |
+| 30 | `Mobile.PlayerPlayedTime` | [ ] |
+| 31 | `Mobile.RemoteServerSessionID` | [ ] |
+| 32 | `Mobile.RespawnSkipController` | [ ] |
+| 33 | `Mobile.RespawnSkipMouseKeyboard` | [ ] |
+| 34 | `Mobile.RespawnSkipTouch` | [ ] |
+| 35 | `Mobile.ReturnToMainMenu` | [ ] |
+| 36 | `Mobile.ScopePanModeTitle` | [ ] |
+| 37 | `Mobile.ShareButton` | [ ] |
+| 38 | `Mobile.TooltipBuffConsole` | [ ] |
+| 39 | `Mobile.TooltipBuffKM` | [ ] |
+| 40 | `Mobile.TooltipBuffTouch` | [ ] |
+| 41 | `Mobile.TooltipDigtoisePetConsole` | [ ] |
+| 42 | `Mobile.TooltipDigtoisePetKM` | [ ] |
+| 43 | `Mobile.TooltipDigtoisePetTouch` | [ ] |
+| 44 | `Mobile.TooltipDigtoiseRecallConsole` | [ ] |
+| 45 | `Mobile.TooltipDigtoiseRecallKM` | [ ] |
+| 46 | `Mobile.TooltipDigtoiseRecallTouch` | [ ] |
+| 47 | `Mobile.TooltipHealConsole` | [ ] |
+| 48 | `Mobile.TooltipHealKM` | [ ] |
+| 49 | `Mobile.TooltipHealTouch` | [ ] |
+| 50 | `Mobile.TooltipManaConsole` | [ ] |
+| 51 | `Mobile.TooltipManaKM` | [ ] |
+| 52 | `Mobile.TooltipManaTouch` | [ ] |
+| 53 | `Mobile.TooltipMountConsole` | [ ] |
+| 54 | `Mobile.TooltipMountKM` | [ ] |
+| 55 | `Mobile.TooltipMountTouch` | [ ] |
+| 56 | `Mobile.TooltipShareConsole` | [ ] |
+| 57 | `Mobile.TooltipShareKM` | [ ] |
+| 58 | `Mobile.TooltipShareTouch` | [ ] |
+| 59 | `Mobile.TooltipSwitchAmmoConsole` | [ ] |
+| 60 | `Mobile.TooltipSwitchAmmoKM` | [ ] |
+| 61 | `Mobile.TooltipSwitchAmmoTouch` | [ ] |
+| 62 | `Mobile.UnshareButton` | [ ] |
+| 63 | `Mobile.VisionOSControllerDisconnected` | [ ] |
+
+## `害人汉化/Projectiles.json`  — 缺失 25 条  (补来源: `zh-Hans.Projectiles`)
+
+| # | 需人工翻译/校对 的 key 路径 | 状态 |
+|---|---------------------------|------|
+| 1 | `ProjectileName.ArcSurge` | [ ] |
+| 2 | `ProjectileName.BoneShard` | [ ] |
+| 3 | `ProjectileName.CascadeExplosion` | [ ] |
+| 4 | `ProjectileName.ChlorophyteClaymoreBlade` | [ ] |
+| 5 | `ProjectileName.ChlorophyteClaymoreBladeSlam` | [ ] |
+| 6 | `ProjectileName.ChlorophyteClaymoreSporeCloud` | [ ] |
+| 7 | `ProjectileName.ChlorophyteSaberStab` | [ ] |
+| 8 | `ProjectileName.ClayPotMinion` | [ ] |
+| 9 | `ProjectileName.CrystalShardMelee` | [ ] |
+| 10 | `ProjectileName.DaybloomStaffShot` | [ ] |
+| 11 | `ProjectileName.ForbiddenMinion` | [ ] |
+| 12 | `ProjectileName.ForbiddenMinionShot` | [ ] |
+| 13 | `ProjectileName.GlacierFangShot` | [ ] |
+| 14 | `ProjectileName.KrakenWave` | [ ] |
+| 15 | `ProjectileName.LightningStrikeShot` | [ ] |
+| 16 | `ProjectileName.MeleeBone` | [ ] |
+| 17 | `ProjectileName.PalworldMinionTrustyCattiva` | [ ] |
+| 18 | `ProjectileName.PalworldMinionTrustyFoxsparks` | [ ] |
+| 19 | `ProjectileName.PalworldTrustyDigtoise` | [ ] |
+| 20 | `ProjectileName.PetalstormShot` | [ ] |
+| 21 | `ProjectileName.SnakeBandStarCloakTinkerStar` | [ ] |
+| 22 | `ProjectileName.SnappingStoneEffect` | [ ] |
+| 23 | `ProjectileName.SnappingStoneMeleeEffect` | [ ] |
+| 24 | `ProjectileName.SnappingStoneSummonEffect` | [ ] |
+| 25 | `ProjectileName.TheEyeOfCthulhuDash` | [ ] |
+
+---
+> 提示：本 md 仅为人工对照辅助，不会被游戏读取。正式译文请回填到 `Localization/` 下的对应 json 后再打 build。
