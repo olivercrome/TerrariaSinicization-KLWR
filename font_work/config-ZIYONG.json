@@ -40,7 +40,7 @@
       "txtFile": "Death_Text.txt",
       "description": "死亡文字字体",
       "charInfoFile": "./FontInfo/Death_Text.txt",
-      "sourceFont": "./YeZiGongChangGuaiJiaoHei-2.ttf",
+      "sourceFont": "./MonuYueDong-Bd1.5.ttf",
       "digitCompensation": 2.5
     },
     "Mouse_Text": {
