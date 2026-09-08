@@ -7657,7 +7657,7 @@
         "SkeletronPrimeBossBag": "{$CommonItemTooltip.RightClickToOpen}\n必得[i:3356]、12[i:73]\n[i:547]x25~40 [i:1225]x20~35\n[i:2107](14.29%)\n“下次一定能开出你想要的！”",
         "PlanteraBossBag": "{$CommonItemTooltip.RightClickToOpen}\n必得[i:3336][i:1141]、15[i:73]\n必得此8物品的其中之1:\n[i:758][i:1255][i:788][i:1178][i:1259][i:1155][i:3018][i:5477]\n[i:1157](50%) [i:3021](10%) [i:1305](5%)\n[i:1182](6.67%) [i:2109](14.29%)\n“下次一定能开出你想要的！”",
         "GolemBossBag": "{$CommonItemTooltip.RightClickToOpen}\n必得[i:3337]、12[i:73]\n[i:2218]x18~23\n必得此7物品的其中之1:\n[i:1258][i:1122][i:899][i:1248][i:1295][i:1296][i:1297]\n[i:1294](33.3%) [i:2110](14.29%)\n“下次一定能开出你想要的！”",
-        "FishronBossBag": "{$CommonItemTooltip.RightClickToOpen}\n必得[i:3367]、25[i:73]\n必得此6物品的其中之1:\n[i:2623][i:2611][i:2622][i:2621][i:2624][i:5478]\n[i:2609](10%) [i:2588](14.29%)\n“下次一定能开出你想要的！”",
+        "FishronBossBag": "{$CommonItemTooltip.RightClickToOpen}\n必得[i:3367]、25[i:73]\n必得此7物品的其中之1:\n[i:2623][i:2611][i:2622][i:2621][i:2624][i:5478][i:3291]\n[i:2609](10％) [i:2588](14.29％)\n“下次一定能开出你想要的！”",
         "CultistBossBag": "{$CommonItemTooltip.RightClickToOpen}\n除了个低概率获得的面具，你什么都得不到\n哪弄到的,开纪是吧?",
         "MoonLordBossBag": "{$CommonItemTooltip.RightClickToOpen}\n必得[i:1131][i:3577][i:4954]\n[i:3460]x90~110\n必得此10物品的其中之2:\n[i:3063][i:3065][i:3389][i:1553][i:3930][i:3541][i:3570][i:3569][i:3571][i:5480]\n背包中没有[i:3384]时必得\n[i:4469](10%) [i:3373](14.29%)\n“下次一定能开出你想要的！”",
         "GoblinSummonerBanner": "{$CommonItemTooltip.BannerBonus}{$NPCName.GoblinSummoner}",

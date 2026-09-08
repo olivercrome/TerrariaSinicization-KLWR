@@ -40,7 +40,7 @@
       "txtFile": "Death_Text.txt",
       "description": "死亡文字字体",
       "charInfoFile": "./FontInfo/Death_Text.txt",
-      "sourceFont": "./unifont-17.0.04.ttf",
+      "sourceFont": "./YeZiGongChangGuaiJiaoHei-2.ttf",
       "digitCompensation": 2.5
     },
     "Mouse_Text": {
@@ -50,7 +50,6 @@
       "txtFile": "Mouse_Text.txt",
       "description": "鼠标提示文字字体",
       "charInfoFile": "./FontInfo/Mouse_Text.txt",
-      "sourceFont": "./unifont-17.0.04.ttf",
       "monoDigitWidth": -1
     }
   },
