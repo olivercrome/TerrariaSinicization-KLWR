@@ -14,6 +14,10 @@ TARGET_DIR = "./"
 CHARS_SOURCE_FABU = "chars_for_bmfc_fabu.txt"
 CHARS_SOURCE_ZIYONG = "chars_for_bmfc_ziyong.txt"
 
+# ---- siyong（私用）组：汉字来源改为 14000 字字库，不再顺次补 CJK ----
+SIYONG_CHARSET = "14000字字库【lzup收集】.txt"
+CHARS_SOURCE_SIYONG = "chars_for_bmfc_siyong.txt"
+
 # 两个分组各自的 .bmfc 文件
 BMFC_FILES_FABU = [
     "Death_Text_fabu.bmfc",
@@ -23,6 +27,15 @@ BMFC_FILES_ZIYONG = [
     "Death_Text_ziyong.bmfc",
     "Mouse_Text_ziyong.bmfc"
 ]
+# siyong 的 bmfc；不存在时从同名 ziyong 版本复制（保证上半部分参数一致）
+BMFC_FILES_SIYONG = [
+    "Death_Text_siyong.bmfc",
+    "Mouse_Text_siyong.bmfc"
+]
+SIYONG_TEMPLATE = {
+    "Death_Text_siyong.bmfc": "Death_Text_ziyong.bmfc",
+    "Mouse_Text_siyong.bmfc": "Mouse_Text_ziyong.bmfc",
+}
 # ==========================================
 
 # 自动符号范围（同之前，无变化）
@@ -143,6 +156,73 @@ def generate_charset_and_config(char_limit, output_file):
 
     return total
 
+def load_siyong_charset():
+    """读取 siyong 专用的 14000 字字库（每行一个字符）"""
+    charset = set()
+    if os.path.exists(SIYONG_CHARSET):
+        with open(SIYONG_CHARSET, 'r', encoding='utf-8') as f:
+            for line in f:
+                line = line.strip()
+                if line and not line.startswith('#'):
+                    charset.update(line)
+        print(f"✅ 加载 siyong 字库：{len(charset)} 个字符")
+    else:
+        print(f"⚠️  未找到 {SIYONG_CHARSET}，siyong 将仅用符号+基础字库。")
+    return charset
+
+def generate_siyong_charset(output_file):
+    """siyong：符号 + 基础字库 + 14000 字字库（不做 CJK 顺次补足）
+
+    与 fabu/ziyong 的区别仅在汉字来源：不再从 0x4E00 顺次补到上限，
+    而是采用精挑的 14000 字字库。不写 full_charset.txt，避免影响原逻辑产物。
+    """
+    charset = set()
+
+    # 1. 自动符号
+    for start, end in symbol_ranges:
+        for cp in range(start, end+1):
+            charset.add(chr(cp))
+
+    # 2. 基础字库
+    charset.update(load_base_charset())
+
+    # 3. 14000 字字库
+    charset.update(load_siyong_charset())
+
+    total = len(charset)
+    print(f"   ✅ 最终字库：{total} 个字符（基础 + 14000 字库）")
+
+    # 4. 生成 chars= 配置（不覆盖 full_charset.txt）
+    sorted_chars = sorted(charset, key=lambda c: ord(c))
+    codes = [ord(c) for c in sorted_chars]
+    ranges = []
+    start = end = codes[0]
+    for c in codes[1:]:
+        if c == end + 1:
+            end = c
+        else:
+            ranges.append(str(start) if start == end else f"{start}-{end}")
+            start = end = c
+    ranges.append(str(start) if start == end else f"{start}-{end}")
+
+    chunks = [ranges[i:i+50] for i in range(0, len(ranges), 50)]
+    chars_lines = "\n".join(["chars=" + ",".join(chunk) for chunk in chunks])
+
+    with open(output_file, 'w', encoding='utf-8') as out:
+        out.write(chars_lines + '\n')
+
+    return total
+
+def ensure_siyong_bmfc():
+    """siyong 的 bmfc 不存在时，从对应 ziyong 版本复制（只复制，不生成 chars）"""
+    for dst, src in SIYONG_TEMPLATE.items():
+        if not os.path.exists(dst):
+            if os.path.exists(src):
+                shutil.copy2(src, dst)
+                print(f"   📄 新建 {dst}（复制自 {src}）")
+            else:
+                print(f"   ⚠️  模板 {src} 不存在，无法创建 {dst}")
+
 def backup_and_update_bmfc(chars_source, bmfc_files, label):
     """根据 chars 源文件更新指定的 bmfc 文件列表"""
     if not os.path.exists(chars_source):
@@ -245,3 +325,10 @@ if __name__ == "__main__":
     print(f"\n▶ [ziyong] 开始生成字表，上限 {char_limit_ziyong} ...")
     generate_charset_and_config(char_limit_ziyong, CHARS_SOURCE_ZIYONG)
     backup_and_update_bmfc(CHARS_SOURCE_ZIYONG, BMFC_FILES_ZIYONG, "ziyong")
+
+    # 6. siyong：bmfc 不存在则从 ziyong 复制，然后用 14000 字库生成 chars
+    print(f"\n▶ [siyong] 准备 bmfc ...")
+    ensure_siyong_bmfc()
+    print(f"\n▶ [siyong] 开始生成字表（{SIYONG_CHARSET}）...")
+    generate_siyong_charset(CHARS_SOURCE_SIYONG)
+    backup_and_update_bmfc(CHARS_SOURCE_SIYONG, BMFC_FILES_SIYONG, "siyong")

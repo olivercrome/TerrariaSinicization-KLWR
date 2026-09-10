@@ -34,8 +34,21 @@ UnpackTerrariaTextAsset/
 ├── Resources/                       # 原始游戏资源
 │   └── data.unity3d
 └── .github/workflows/               # GitHub Actions 工作流
-    └── build-and-localize.yml
+    ├── build-ziyong.yml             # 自用版 -> data_ziyong.unity3d（并回写官方更新）
+    └── build-siyong.yml             # 私用版 -> data_siyong.unity3d
 ```
+
+> **字体配置说明**（`font_work/`）
+>
+> | 配置 | 用途 | 死亡/鼠标文字字符集 | 包名 |
+> |---|---|---|---|
+> | `config-FABU.json` | 发布版 | 7000 基础字库 + 顺次补足 | — |
+> | `config-ZIYONG.json` | 自用版 | 7000 基础字库 + 顺次补足到 13000 | `data_ziyong.unity3d` |
+> | `config-SIYONG.json` | 私用版 | 7000 基础字库 + **14000 字字库** | `data_siyong.unity3d` |
+>
+> 字表由 `font_work/build_and_update.py` 生成并写入对应的 `*.bmfc` 的 `chars=` 行；
+> `FontXnaBuilder.ps1` 打包时会**保留 bmfc 里已有的 `chars=`**（不被二进制字表覆盖），
+> 仅按 config 的 `sourceFont` 更新字体 —— 因此**切换字体只需改 config，无需手改 bmfc**。
 
 ## 📝 如何自定义汉化
 
@@ -51,8 +64,10 @@ UnpackTerrariaTextAsset/
 每次推送到仓库后，Actions 会自动运行并生成资源包：
 
 1. 进入仓库的 **Actions** 标签页
-2. 选择最新的工作流运行
-3. 在页面底部的 **Artifacts** 区域找到 `localized-data-unity3d`
+2. 选择最新的工作流运行（`Build ZIYONG` 或 `Build SIYONG`）
+3. 在页面底部的 **Artifacts** 区域找到对应产物：
+   - `data-ziyong-unity3d`（自用版）
+   - `data-siyong-unity3d`（私用版）
 4. 点击下载即可获得汉化后的 `data.unity3d`
 
 > 💡 每次构建还会额外生成并上传一个 `original-zh-Hans-json` 压缩包，里面是**解包原始 data.unity3d 得到的官方原始中文 (zh-Hans) 语言文件**（JSON），可随包一起在 Artifacts 下载区拿取。

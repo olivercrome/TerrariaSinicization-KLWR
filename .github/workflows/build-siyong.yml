@@ -1,0 +1,161 @@
+name: Build SIYONG (私用版)
+
+# 私用版：config-SIYONG.json -> data_siyong.unity3d
+#   · 本工作流【不】提交 Localization/（由 build-ziyong.yml 负责），
+#     避免两个工作流并发 push 冲突。
+
+on:
+  push:
+    branches: [ main, master ]
+  workflow_dispatch:
+
+env:
+  CONFIG_FILE: config-SIYONG.json
+  OUTPUT_NAME: data_siyong.unity3d
+
+jobs:
+  build:
+    runs-on: windows-latest
+    permissions:
+      contents: write
+      actions: read
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v6
+
+    # ============================================================
+    # 🔥 验证所有 JSON 文件格式（失败即终止）
+    # ============================================================
+    - name: Validate JSON files
+      shell: pwsh
+      run: |
+        $jsonFiles = Get-ChildItem -Path Localization -Filter *.json
+        $hasError = $false
+        Write-Host "📁 开始验证 Localization 目录下的 JSON 文件..."
+        foreach ($file in $jsonFiles) {
+          Write-Host "  🔍 检查 $($file.Name) ..."
+          $result = python -m json.tool $file.FullName 2>&1
+          if ($LASTEXITCODE -ne 0) {
+            Write-Host "❌ 错误: $($file.Name) 格式无效！"
+            Write-Host $result
+            $hasError = $true
+          } else {
+            Write-Host "  ✅ $($file.Name) 格式正确"
+          }
+        }
+        if ($hasError) {
+          Write-Host "##[error]检测到 JSON 格式错误，构建终止！"
+          exit 1
+        }
+        Write-Host "🎉 所有 JSON 文件验证通过！"
+
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v5
+      with:
+        dotnet-version: '8.0.x'
+
+    - name: Build XnaFontRebuilder
+      run: |
+        cd font_work\XnaFontRebuilder
+        dotnet build -c Release
+
+    - name: Generate fonts using FontXnaBuilder.ps1
+      shell: pwsh
+      run: |
+        cd font_work
+        Write-Host "使用配置文件: $env:CONFIG_FILE"
+        .\FontXnaBuilder.ps1 -ConfigFile $env:CONFIG_FILE
+
+    - name: 📤 Upload font intermediate files (.bmfc / .fnt / .png)
+      uses: actions/upload-artifact@v7
+      with:
+        name: font-intermediate-files-siyong
+        path: |
+          font_work/*.bmfc
+          font_work/*/*.fnt
+          font_work/*/*.png
+        if-no-files-found: warn
+
+    - name: Build UnpackTerrariaTextAsset
+      run: |
+        cd UnpackTerrariaTextAsset
+        dotnet build -c Release
+
+    - name: Setup absolute paths
+      id: paths
+      run: |
+        $rootDir = Get-Location
+        $bundlePath = Join-Path $rootDir "Resources\data.unity3d"
+        $localizationPath = Join-Path $rootDir "Localization"
+        $outputDir = Join-Path $rootDir "output"
+        $outputPath = Join-Path $outputDir "$env:OUTPUT_NAME"
+        $fontWorkPath = Join-Path $rootDir "font_work"
+
+        Write-Host "Bundle path: $bundlePath"
+        Write-Host "Output path: $outputPath"
+
+        echo "ROOT_DIR=$rootDir" >> $env:GITHUB_OUTPUT
+        echo "BUNDLE_PATH=$bundlePath" >> $env:GITHUB_OUTPUT
+        echo "LOCALIZATION_PATH=$localizationPath" >> $env:GITHUB_OUTPUT
+        echo "OUTPUT_DIR=$outputDir" >> $env:GITHUB_OUTPUT
+        echo "OUTPUT_PATH=$outputPath" >> $env:GITHUB_OUTPUT
+        echo "FONT_WORK_PATH=$fontWorkPath" >> $env:GITHUB_OUTPUT
+
+    - name: Create output directory
+      run: |
+        New-Item -ItemType Directory -Force -Path "${{ steps.paths.outputs.OUTPUT_DIR }}"
+
+    # ============================================================
+    # 🌐 抽取原版 data.unity3d 自带的原始中文 (zh-Hans)
+    #      （须在 -build 覆盖汉化前，对未修改的原版 bundle 操作）
+    # ============================================================
+    - name: Extract original zh-Hans language files
+      run: |
+        $exeDir = Join-Path "${{ steps.paths.outputs.ROOT_DIR }}" "UnpackTerrariaTextAsset\bin\Release\net8.0"
+        $zhOutDir = Join-Path "${{ steps.paths.outputs.OUTPUT_DIR }}" "original-zh-Hans"
+        cd $exeDir
+        Write-Host "抽取原始中文 (zh-Hans)..."
+        dotnet UnpackTerrariaTextAsset.dll -extractzh "${{ steps.paths.outputs.BUNDLE_PATH }}" "$zhOutDir"
+        Write-Host "Contents:"
+        Get-ChildItem -Recurse $zhOutDir
+
+    - name: Package original zh-Hans into zip
+      shell: pwsh
+      run: |
+        $zhOutDir = Join-Path "${{ steps.paths.outputs.OUTPUT_DIR }}" "original-zh-Hans"
+        $zipPath = Join-Path "${{ steps.paths.outputs.OUTPUT_DIR }}" "original-zh-Hans.zip"
+        if (Test-Path $zhOutDir) {
+          $tempDir = Join-Path "${{ steps.paths.outputs.OUTPUT_DIR }}" "zip-content"
+          New-Item -ItemType Directory -Force -Path $tempDir | Out-Null
+          Copy-Item "$zhOutDir\*" $tempDir -Recurse
+          Compress-Archive -Path "$tempDir\*" -DestinationPath $zipPath -Force
+          Write-Host "打包完成: $zipPath"
+        } else {
+          Write-Host "##[warning]未找到 $zhOutDir，跳过打包"
+        }
+
+    # ============================================================
+    # 打包：本地化 JSON + 字体 -> Unity3D 包
+    # ============================================================
+    - name: Localize and replace fonts
+      run: |
+        $exeDir = Join-Path "${{ steps.paths.outputs.ROOT_DIR }}" "UnpackTerrariaTextAsset\bin\Release\net8.0"
+        cd $exeDir
+        Write-Host "Running: -build ..."
+        dotnet UnpackTerrariaTextAsset.dll -build "${{ steps.paths.outputs.BUNDLE_PATH }}" "${{ steps.paths.outputs.LOCALIZATION_PATH }}" "${{ steps.paths.outputs.FONT_WORK_PATH }}" "${{ steps.paths.outputs.OUTPUT_PATH }}"
+        Write-Host "Command completed"
+
+    - name: Upload artifact (unity3d)
+      uses: actions/upload-artifact@v7
+      with:
+        name: data-siyong-unity3d
+        path: ${{ steps.paths.outputs.OUTPUT_PATH }}
+        if-no-files-found: error
+
+    - name: 📦 Upload original zh-Hans zip
+      uses: actions/upload-artifact@v7
+      with:
+        name: original-zh-Hans-json-siyong
+        path: ${{ steps.paths.outputs.OUTPUT_DIR }}/original-zh-Hans.zip
+        if-no-files-found: warn

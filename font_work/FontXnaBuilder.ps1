@@ -170,18 +170,57 @@ function Generate-ConfigFile {
             Write-Host "    使用字体（全局）: $fontSource" -ForegroundColor Gray
         }
 
+        $targetBmfc = $FontConfig.ConfigFile
+
+        # ── 关键：若目标 bmfc 已存在，保留它原有的 chars= 行（由 build_and_update.py 维护），
+        #          只用 --build-cfg-auto 覆盖「字体 + 其它参数」，避免字符集被二进制 txt 冲掉。
+        $keepChars = $null
+        if (FileExists $targetBmfc) {
+            $keepChars = @(Get-Content -LiteralPath $targetBmfc -Encoding UTF8 | Where-Object { $_ -like 'chars=*' })
+            if ($keepChars.Count -gt 0) {
+                Write-Host "    保留现有 chars= 行: $($keepChars.Count) 行" -ForegroundColor Gray
+            } else {
+                $keepChars = $null
+            }
+        }
+
+        # 生成到一个临时文件（拿到新字体/默认参数）
+        $tmpBmfc = "$targetBmfc.tmpgen"
+        if (FileExists $tmpBmfc) { Remove-Item -LiteralPath $tmpBmfc -Force }
+
         $cmdArgs = @(
             "`"$XnaFontRebuilder`"",
             "--build-cfg-auto",
             "`"$($FontConfig.CharInfoFile)`"",
-            "`"$($FontConfig.ConfigFile)`"",
+            "`"$tmpBmfc`"",
             "`"$fontSource`""
         )
         $cmd = "dotnet " + ($cmdArgs -join " ")
         Invoke-Expression $cmd
         if ($LASTEXITCODE -ne 0) { throw "配置文件生成失败，退出代码: $LASTEXITCODE" }
-        if (-not (FileExists $FontConfig.ConfigFile)) { throw "未找到生成的配置文件" }
-        Write-Host "    ✓ 配置文件生成成功: $($FontConfig.ConfigFile)" -ForegroundColor Green
+        if (-not (FileExists $tmpBmfc)) { throw "未找到生成的临时配置文件" }
+
+        if ($null -ne $keepChars) {
+            # 用保留的 chars= 行替换临时文件里的 chars=（临时文件里 auto 生成的那份）
+            $tmpLines = @(Get-Content -LiteralPath $tmpBmfc -Encoding UTF8 | Where-Object { $_ -notlike 'chars=*' })
+            $merged = @()
+            $merged += $tmpLines
+            $merged += $keepChars
+
+            # 用 UTF8 无 BOM 写回目标（与原文件风格一致）
+            $targetAbs = [System.IO.Path]::GetFullPath((Join-Path $ScriptDir $targetBmfc))
+            $utf8NoBom = New-Object System.Text.UTF8Encoding($false)
+            [System.IO.File]::WriteAllLines($targetAbs, $merged, $utf8NoBom)
+            Remove-Item -LiteralPath $tmpBmfc -Force
+            Write-Host "    ✓ 已更新字体并保留原字符集: $targetBmfc" -ForegroundColor Green
+        } else {
+            # 原本不存在 → 直接用生成结果命名目标文件
+            if (FileExists $targetBmfc) { Remove-Item -LiteralPath $targetBmfc -Force }
+            Move-Item -LiteralPath $tmpBmfc -Destination $targetBmfc -Force
+            Write-Host "    ✓ 配置文件生成成功: $targetBmfc" -ForegroundColor Green
+        }
+
+        if (-not (FileExists $targetBmfc)) { throw "未找到生成的配置文件" }
         return $true
     } catch {
         Write-Host "    ✗ 失败: $_" -ForegroundColor Red
@@ -202,17 +241,15 @@ function Generate-Font {
     
     $startTime = Get-Date
     
+    # 总是走 Generate-ConfigFile：
+    #   - bmfc 不存在 → 用 --build-cfg-auto 全量生成（其余 3 个字体即此情况）
+    #   - bmfc 已存在 → 保留其 chars=（由 build_and_update.py 维护），仅更新字体
     $configFullPath = $FontConfig.ConfigFile
-    if (FileExists $configFullPath) {
-        Write-Host "  [0/3] 使用现有配置文件: $configFullPath" -ForegroundColor Yellow
-    } else {
-        Write-Host "  [0/3] 生成配置文件..." -ForegroundColor Yellow
-        if (-not (Generate-ConfigFile -FontName $FontName -FontConfig $FontConfig)) { return $false }
-        $configFullPath = $FontConfig.ConfigFile
-        if (-not (FileExists $configFullPath)) {
-            Write-Host "  ✗ 配置文件生成失败: $configFullPath" -ForegroundColor Red
-            return $false
-        }
+    if (-not (Generate-ConfigFile -FontName $FontName -FontConfig $FontConfig)) { return $false }
+    $configFullPath = $FontConfig.ConfigFile
+    if (-not (FileExists $configFullPath)) {
+        Write-Host "  ✗ 配置文件生成失败: $configFullPath" -ForegroundColor Red
+        return $false
     }
     
     if (-not (Test-Path $FontConfig.OutputDir -PathType Container)) {
