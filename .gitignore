@@ -371,3 +371,5 @@ font_work/Combat_Crit/
 font_work/Combat_Text/
 font_work/Death_Text/
 font_work/Mouse_Text/
+# bmfc 备份文件（build_and_update.py 自动生成，无需入库）
+font_work/*.bmfc.bak
