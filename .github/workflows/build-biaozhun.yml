@@ -1,15 +1,23 @@
-name: Build SIYONG (私用版)
+name: Build BIAOZHUN (发布版)
 
-# 私用版：config-SIYONG.json -> data_siyong.unity3d
-#   · 仅手动触发（不在 push 时自动运行）。
-#   · 本工作流【不】提交 Localization/，避免与 biaozhun/zititihuan 的回写冲突。
+# 发布版：config-BIAOZHUN.json -> data_biaozhun.unity3d
+#   · 负责把 -build 补入 Localization/ 的官方新增条目 commit & push 回仓库
+#     （另一路 build-biaozhun.yml 也做，遇并发时各自 rebase 重试即可）
 
 on:
+  push:
+    branches: [ main, master ]
   workflow_dispatch:
 
 env:
-  CONFIG_FILE: config-SIYONG.json
-  OUTPUT_NAME: data_siyong.unity3d
+  CONFIG_FILE: config-BIAOZHUN.json
+  OUTPUT_NAME: data_biaozhun.unity3d
+
+# 与 build-biaozhun 共用同一 concurrency 组：同一分支上两个工作流串行执行，
+# 避免两边的「回写 Localization 并 push」互相打架。
+concurrency:
+  group: localization-push-${{ github.ref }}
+  cancel-in-progress: false
 
 jobs:
   build:
@@ -68,7 +76,7 @@ jobs:
     - name: 📤 Upload font intermediate files (.bmfc / .fnt / .png)
       uses: actions/upload-artifact@v7
       with:
-        name: font-intermediate-files-siyong
+        name: font-intermediate-files-biaozhun
         path: |
           font_work/*.bmfc
           font_work/*/*.fnt
@@ -144,16 +152,51 @@ jobs:
         dotnet UnpackTerrariaTextAsset.dll -build "${{ steps.paths.outputs.BUNDLE_PATH }}" "${{ steps.paths.outputs.LOCALIZATION_PATH }}" "${{ steps.paths.outputs.FONT_WORK_PATH }}" "${{ steps.paths.outputs.OUTPUT_PATH }}"
         Write-Host "Command completed"
 
+    # ============================================================
+    # 📤 官方 zh-Hans 更新 Localization/ 与 害人汉化/ 的 json
+    #   -build 已对两个目录做「官方新增条目回写」(深度递归·只补不删·保留已有自制译名)。
+    #   这里把它们的 diff 提交并 push 回仓库，方便拉取后继续汉化。
+    #   ⚠️ 只有本工作流做这件事（build-siyong 不做），避免并发 push 冲突。
+    # ============================================================
+    - name: 📤 Commit & push 官方更新到 Localization / 害人汉化
+      shell: pwsh
+      run: |
+        git config user.name  "github-actions[bot]"
+        git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+        git add "Localization/"
+
+        if (git diff --cached --quiet --exit-code) {
+          Write-Host "Localization/ 无改动(-build 未补入新条目)，跳过提交。"
+          exit 0
+        }
+
+        $branch = "${{ github.ref_name }}"
+        $remote = "https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git"
+        git commit -m "🧹 以官方 zh-Hans 更新 Localization 与 害人汉化(缺失 key 仅补官方原文占位,待自制)"
+
+        $ok = $false
+        for ($i = 1; $i -le 3; $i++) {
+          git fetch origin $branch
+          git rebase "origin/$branch"
+          if ($LASTEXITCODE -ne 0) { git rebase --abort; Write-Host "rebase 失败，重试 $i/3"; Start-Sleep -Seconds 5; continue }
+          git push $remote "HEAD:$branch"
+          if ($LASTEXITCODE -eq 0) { $ok = $true; break }
+          Write-Host "push 失败，重试 $i/3"; Start-Sleep -Seconds 5
+        }
+        if (-not $ok) { Write-Host "##[error]3 次重试后仍无法推送回写内容"; exit 1 }
+        Write-Host "✅ 官方更新已推送回 $branch"
+
     - name: Upload artifact (unity3d)
       uses: actions/upload-artifact@v7
       with:
-        name: data-siyong-unity3d
+        name: data-biaozhun-unity3d
         path: ${{ steps.paths.outputs.OUTPUT_PATH }}
         if-no-files-found: error
 
     - name: 📦 Upload original zh-Hans zip
       uses: actions/upload-artifact@v7
       with:
-        name: original-zh-Hans-json-siyong
+        name: original-zh-Hans-json-biaozhun
         path: ${{ steps.paths.outputs.OUTPUT_DIR }}/original-zh-Hans.zip
         if-no-files-found: warn

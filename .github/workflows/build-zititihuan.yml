@@ -1,8 +1,8 @@
-name: Build ZIYONG (自用版)
+name: Build ZITITIHUAN (自用版)
 
-# 自用版：config-ZIYONG.json -> data_ziyong.unity3d
+# 自用版：config-ZITITIHUAN.json -> data_zititihuan.unity3d
 #   · 负责把 -build 补入 Localization/ 的官方新增条目 commit & push 回仓库
-#     （另一个 build-siyong.yml 不做，避免两个工作流并发 push 冲突）
+#     （另一路 build-biaozhun.yml 也做，遇并发时各自 rebase 重试即可）
 
 on:
   push:
@@ -10,8 +10,14 @@ on:
   workflow_dispatch:
 
 env:
-  CONFIG_FILE: config-ZIYONG.json
-  OUTPUT_NAME: data_ziyong.unity3d
+  CONFIG_FILE: config-ZITITIHUAN.json
+  OUTPUT_NAME: data_zititihuan.unity3d
+
+# 与 build-biaozhun 共用同一 concurrency 组：同一分支上两个工作流串行执行，
+# 避免两边的「回写 Localization 并 push」互相打架。
+concurrency:
+  group: localization-push-${{ github.ref }}
+  cancel-in-progress: false
 
 jobs:
   build:
@@ -70,7 +76,7 @@ jobs:
     - name: 📤 Upload font intermediate files (.bmfc / .fnt / .png)
       uses: actions/upload-artifact@v7
       with:
-        name: font-intermediate-files-ziyong
+        name: font-intermediate-files-zititihuan
         path: |
           font_work/*.bmfc
           font_work/*/*.fnt
@@ -166,22 +172,31 @@ jobs:
         }
 
         $branch = "${{ github.ref_name }}"
+        $remote = "https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git"
         git commit -m "🧹 以官方 zh-Hans 更新 Localization 与 害人汉化(缺失 key 仅补官方原文占位,待自制)"
-        git fetch origin $branch
-        git rebase origin/$branch
-        git push "https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git" "HEAD:$branch"
+
+        $ok = $false
+        for ($i = 1; $i -le 3; $i++) {
+          git fetch origin $branch
+          git rebase "origin/$branch"
+          if ($LASTEXITCODE -ne 0) { git rebase --abort; Write-Host "rebase 失败，重试 $i/3"; Start-Sleep -Seconds 5; continue }
+          git push $remote "HEAD:$branch"
+          if ($LASTEXITCODE -eq 0) { $ok = $true; break }
+          Write-Host "push 失败，重试 $i/3"; Start-Sleep -Seconds 5
+        }
+        if (-not $ok) { Write-Host "##[error]3 次重试后仍无法推送回写内容"; exit 1 }
         Write-Host "✅ 官方更新已推送回 $branch"
 
     - name: Upload artifact (unity3d)
       uses: actions/upload-artifact@v7
       with:
-        name: data-ziyong-unity3d
+        name: data-zititihuan-unity3d
         path: ${{ steps.paths.outputs.OUTPUT_PATH }}
         if-no-files-found: error
 
     - name: 📦 Upload original zh-Hans zip
       uses: actions/upload-artifact@v7
       with:
-        name: original-zh-Hans-json-ziyong
+        name: original-zh-Hans-json-zititihuan
         path: ${{ steps.paths.outputs.OUTPUT_DIR }}/original-zh-Hans.zip
         if-no-files-found: warn

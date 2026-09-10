@@ -7,34 +7,34 @@ from datetime import datetime
 # ==========================================
 #              【默认参数（可被交互覆盖）】
 # ==========================================
-DEFAULT_CHAR_LIMIT_FABU = 8000      # fabu 默认总字符数上限
-DEFAULT_CHAR_LIMIT_ZIYONG = 13000    # ziyong 默认总字符数上限
+DEFAULT_CHAR_LIMIT_BIAOZHUN = 8000      # biaozhun 默认总字符数上限
+DEFAULT_CHAR_LIMIT_ZITITIHUAN = 13000    # zititihuan 默认总字符数上限
 BASE_CHARSET = "7000汉字 符号 英文字符集.txt"
 TARGET_DIR = "./"
-CHARS_SOURCE_FABU = "chars_for_bmfc_fabu.txt"
-CHARS_SOURCE_ZIYONG = "chars_for_bmfc_ziyong.txt"
+CHARS_SOURCE_BIAOZHUN = "chars_for_bmfc_biaozhun.txt"
+CHARS_SOURCE_ZITITIHUAN = "chars_for_bmfc_zititihuan.txt"
 
 # ---- siyong（私用）组：汉字来源改为 14000 字字库，不再顺次补 CJK ----
 SIYONG_CHARSET = "14000字字库【lzup收集】.txt"
 CHARS_SOURCE_SIYONG = "chars_for_bmfc_siyong.txt"
 
 # 两个分组各自的 .bmfc 文件
-BMFC_FILES_FABU = [
-    "Death_Text_fabu.bmfc",
-    "Mouse_Text_fabu.bmfc"
+BMFC_FILES_BIAOZHUN = [
+    "Death_Text_biaozhun.bmfc",
+    "Mouse_Text_biaozhun.bmfc"
 ]
-BMFC_FILES_ZIYONG = [
-    "Death_Text_ziyong.bmfc",
-    "Mouse_Text_ziyong.bmfc"
+BMFC_FILES_ZITITIHUAN = [
+    "Death_Text_zititihuan.bmfc",
+    "Mouse_Text_zititihuan.bmfc"
 ]
-# siyong 的 bmfc；不存在时从同名 ziyong 版本复制（保证上半部分参数一致）
+# siyong 的 bmfc；不存在时从同名 zititihuan 版本复制（保证上半部分参数一致）
 BMFC_FILES_SIYONG = [
     "Death_Text_siyong.bmfc",
     "Mouse_Text_siyong.bmfc"
 ]
 SIYONG_TEMPLATE = {
-    "Death_Text_siyong.bmfc": "Death_Text_ziyong.bmfc",
-    "Mouse_Text_siyong.bmfc": "Mouse_Text_ziyong.bmfc",
+    "Death_Text_siyong.bmfc": "Death_Text_zititihuan.bmfc",
+    "Mouse_Text_siyong.bmfc": "Mouse_Text_zititihuan.bmfc",
 }
 # ==========================================
 
@@ -173,7 +173,7 @@ def load_siyong_charset():
 def generate_siyong_charset(output_file):
     """siyong：符号 + 基础字库 + 14000 字字库（不做 CJK 顺次补足）
 
-    与 fabu/ziyong 的区别仅在汉字来源：不再从 0x4E00 顺次补到上限，
+    与 biaozhun/zititihuan 的区别仅在汉字来源：不再从 0x4E00 顺次补到上限，
     而是采用精挑的 14000 字字库。不写 full_charset.txt，避免影响原逻辑产物。
     """
     charset = set()
@@ -214,7 +214,7 @@ def generate_siyong_charset(output_file):
     return total
 
 def ensure_siyong_bmfc():
-    """siyong 的 bmfc 不存在时，从对应 ziyong 版本复制（只复制，不生成 chars）"""
+    """siyong 的 bmfc 不存在时，从对应 zititihuan 版本复制（只复制，不生成 chars）"""
     for dst, src in SIYONG_TEMPLATE.items():
         if not os.path.exists(dst):
             if os.path.exists(src):
@@ -279,54 +279,54 @@ if __name__ == "__main__":
     print("正在计算最小字符数...")
     min_limit = calculate_min_limit()
     print(f"📏 自动计算的下限（符号+基础字库）: {min_limit}")
-    print(f"📏 fabu 默认上限: {DEFAULT_CHAR_LIMIT_FABU}")
-    print(f"📏 ziyong 默认上限: {DEFAULT_CHAR_LIMIT_ZIYONG}\n")
+    print(f"📏 biaozhun 默认上限: {DEFAULT_CHAR_LIMIT_BIAOZHUN}")
+    print(f"📏 zititihuan 默认上限: {DEFAULT_CHAR_LIMIT_ZITITIHUAN}\n")
 
-    # 2. 交互询问 fabu
-    user_input = input(f"请输入 fabu 字数上限（≥{min_limit}），直接回车使用默认 {DEFAULT_CHAR_LIMIT_FABU}，输入其他内容则退出: ").strip()
+    # 2. 交互询问 biaozhun
+    user_input = input(f"请输入 biaozhun 字数上限（≥{min_limit}），直接回车使用默认 {DEFAULT_CHAR_LIMIT_BIAOZHUN}，输入其他内容则退出: ").strip()
     if user_input == "":
-        char_limit_fabu = DEFAULT_CHAR_LIMIT_FABU
-        print(f"✅ fabu 使用默认上限: {char_limit_fabu}")
+        char_limit_biaozhun = DEFAULT_CHAR_LIMIT_BIAOZHUN
+        print(f"✅ biaozhun 使用默认上限: {char_limit_biaozhun}")
     else:
         try:
-            char_limit_fabu = int(user_input)
+            char_limit_biaozhun = int(user_input)
         except ValueError:
             print(f"❌ 输入无效，必须是数字。流程终止。")
             sys.exit(1)
-        if char_limit_fabu < min_limit:
-            print(f"❌ 输入值 {char_limit_fabu} 小于下限 {min_limit}，无法生成。流程终止。")
+        if char_limit_biaozhun < min_limit:
+            print(f"❌ 输入值 {char_limit_biaozhun} 小于下限 {min_limit}，无法生成。流程终止。")
             sys.exit(1)
         else:
-            print(f"✅ fabu 使用自定上限: {char_limit_fabu}")
+            print(f"✅ biaozhun 使用自定上限: {char_limit_biaozhun}")
 
-    # 3. 交互询问 ziyong
-    user_input = input(f"请输入 ziyong 字数上限（≥{min_limit}），直接回车使用默认 {DEFAULT_CHAR_LIMIT_ZIYONG}，输入其他内容则退出: ").strip()
+    # 3. 交互询问 zititihuan
+    user_input = input(f"请输入 zititihuan 字数上限（≥{min_limit}），直接回车使用默认 {DEFAULT_CHAR_LIMIT_ZITITIHUAN}，输入其他内容则退出: ").strip()
     if user_input == "":
-        char_limit_ziyong = DEFAULT_CHAR_LIMIT_ZIYONG
-        print(f"✅ ziyong 使用默认上限: {char_limit_ziyong}")
+        char_limit_zititihuan = DEFAULT_CHAR_LIMIT_ZITITIHUAN
+        print(f"✅ zititihuan 使用默认上限: {char_limit_zititihuan}")
     else:
         try:
-            char_limit_ziyong = int(user_input)
+            char_limit_zititihuan = int(user_input)
         except ValueError:
             print(f"❌ 输入无效，必须是数字。流程终止。")
             sys.exit(1)
-        if char_limit_ziyong < min_limit:
-            print(f"❌ 输入值 {char_limit_ziyong} 小于下限 {min_limit}，无法生成。流程终止。")
+        if char_limit_zititihuan < min_limit:
+            print(f"❌ 输入值 {char_limit_zititihuan} 小于下限 {min_limit}，无法生成。流程终止。")
             sys.exit(1)
         else:
-            print(f"✅ ziyong 使用自定上限: {char_limit_ziyong}")
+            print(f"✅ zititihuan 使用自定上限: {char_limit_zititihuan}")
 
-    # 4. 生成 fabu 字表并更新
-    print(f"\n▶ [fabu] 开始生成字表，上限 {char_limit_fabu} ...")
-    generate_charset_and_config(char_limit_fabu, CHARS_SOURCE_FABU)
-    backup_and_update_bmfc(CHARS_SOURCE_FABU, BMFC_FILES_FABU, "fabu")
+    # 4. 生成 biaozhun 字表并更新
+    print(f"\n▶ [biaozhun] 开始生成字表，上限 {char_limit_biaozhun} ...")
+    generate_charset_and_config(char_limit_biaozhun, CHARS_SOURCE_BIAOZHUN)
+    backup_and_update_bmfc(CHARS_SOURCE_BIAOZHUN, BMFC_FILES_BIAOZHUN, "biaozhun")
 
-    # 5. 生成 ziyong 字表并更新
-    print(f"\n▶ [ziyong] 开始生成字表，上限 {char_limit_ziyong} ...")
-    generate_charset_and_config(char_limit_ziyong, CHARS_SOURCE_ZIYONG)
-    backup_and_update_bmfc(CHARS_SOURCE_ZIYONG, BMFC_FILES_ZIYONG, "ziyong")
+    # 5. 生成 zititihuan 字表并更新
+    print(f"\n▶ [zititihuan] 开始生成字表，上限 {char_limit_zititihuan} ...")
+    generate_charset_and_config(char_limit_zititihuan, CHARS_SOURCE_ZITITIHUAN)
+    backup_and_update_bmfc(CHARS_SOURCE_ZITITIHUAN, BMFC_FILES_ZITITIHUAN, "zititihuan")
 
-    # 6. siyong：bmfc 不存在则从 ziyong 复制，然后用 14000 字库生成 chars
+    # 6. siyong：bmfc 不存在则从 zititihuan 复制，然后用 14000 字库生成 chars
     print(f"\n▶ [siyong] 准备 bmfc ...")
     ensure_siyong_bmfc()
     print(f"\n▶ [siyong] 开始生成字表（{SIYONG_CHARSET}）...")
