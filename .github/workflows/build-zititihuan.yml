@@ -164,9 +164,14 @@ jobs:
         git config user.name  "github-actions[bot]"
         git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
 
+        # 还原构建过程中被改写的 .bmfc（字体参数更新只在换源字体时由本地提交，CI 不提交）
+        git checkout -- "font_work/*.bmfc" 2>$null
+
         git add "Localization/"
 
-        if (git diff --cached --quiet --exit-code) {
+        # ⚠️ PowerShell 的 if 判断的是命令输出而非退出码，必须检查 $LASTEXITCODE
+        git diff --cached --quiet --exit-code
+        if ($LASTEXITCODE -eq 0) {
           Write-Host "Localization/ 无改动(-build 未补入新条目)，跳过提交。"
           exit 0
         }
@@ -174,11 +179,15 @@ jobs:
         $branch = "${{ github.ref_name }}"
         $remote = "https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git"
         git commit -m "🧹 以官方 zh-Hans 更新 Localization 与 害人汉化(缺失 key 仅补官方原文占位,待自制)"
+        if ($LASTEXITCODE -ne 0) {
+          Write-Host "##[warning]commit 失败（无有效改动），跳过回写。"
+          exit 0
+        }
 
         $ok = $false
         for ($i = 1; $i -le 3; $i++) {
           git fetch origin $branch
-          git rebase "origin/$branch"
+          git rebase --autostash "origin/$branch"
           if ($LASTEXITCODE -ne 0) { git rebase --abort; Write-Host "rebase 失败，重试 $i/3"; Start-Sleep -Seconds 5; continue }
           git push $remote "HEAD:$branch"
           if ($LASTEXITCODE -eq 0) { $ok = $true; break }

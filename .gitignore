@@ -362,6 +362,10 @@ MigrationBackup/
 # Fody - auto-generated XML schema
 FodyWeavers.xsd
 
+# UnpackTerrariaTextAsset 编译输出（历史误跟踪，已用 git rm --cached 清理）
+UnpackTerrariaTextAsset/bin/
+UnpackTerrariaTextAsset/obj/
+
 # font_work - 字体工作区
 # XnaFontRebuilder 编译输出
 font_work/XnaFontRebuilder/bin/
