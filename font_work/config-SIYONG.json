@@ -50,7 +50,7 @@
       "txtFile": "Mouse_Text.txt",
       "description": "鼠标提示文字字体",
       "charInfoFile": "./FontInfo/Mouse_Text.txt",
-      "sourceFont": "./YeZiGongChangGuaiJiaoHei-2.ttf",
+      "sourceFont": "./MonuYueDong-Bd1.5.ttf",
       "monoDigitWidth": -1
     }
   },
